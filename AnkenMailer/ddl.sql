@@ -26,9 +26,20 @@ CREATE TABLE [Message] (
     ON UPDATE CASCADE
 );
 
+DROP TABLE IF EXISTS [AnkenHeader];
+CREATE TABLE [AnkenHeader] (
+  [EnvelopeId] INTEGER NOT NULL
+, CONSTRAINT [PK_Anken] PRIMARY KEY ([EnvelopeId])
+, FOREIGN KEY ([EnvelopeId])
+    REFERENCES [Envelope]([EnvelopeId])
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
 DROP TABLE IF EXISTS [Anken];
 CREATE TABLE [Anken] (
   [EnvelopeId] INTEGER NOT NULL
+, [Index]  INTEGER NOT NULL
 , [Name] TEXT NULL -- 案件の名前
 , [Start] TEXT NULL -- 案件の終了時期。表記内容を自然文でそのまま抽出してください。
 , [End] TEXT NULL -- 案件の終了時期。表記内容を自然文でそのまま抽出してください。
@@ -41,12 +52,13 @@ CREATE TABLE [Anken] (
 , [MaxUnitPrice] INTEGER NULL -- 単価の最大
 , [MinUnitPrice] INTEGER NULL -- 単価の最小
 , [Remarks] TEXT NULL -- 備考
-, CONSTRAINT [PK_Anken] PRIMARY KEY ([EnvelopeId])
+, CONSTRAINT [PK_Anken] PRIMARY KEY ([EnvelopeId], [Index])
 , FOREIGN KEY ([EnvelopeId])
-    REFERENCES [Envelope]([EnvelopeId])
+    REFERENCES [AnkenHeader]([EnvelopeId])
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
+
 DROP TABLE IF EXISTS [MainSkill];
 CREATE TABLE [MainSkill] (
     [SkillName] TEXT NULL PRIMARY KEY

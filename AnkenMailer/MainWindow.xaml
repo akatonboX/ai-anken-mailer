@@ -12,7 +12,6 @@
             <local:MailItemToBodyConverter x:Key="mailItemToBodyConverter"/>
             <local:ProgressLabelConverter x:Key="progressLabelConverter"/>
             <local:IsNotNullConverter x:Key="isNotNullConverter"/>
-            <local:AnkenToJsonConverter x:Key="ankenToJsonConverter"/>
             <local:NullToVlisiblityConverter x:Key="nullToVlisiblityConverter"/>
         </ResourceDictionary>
     </Window.Resources>
@@ -130,6 +129,8 @@
                         <Label>メール</Label>
                         <Button Margin="5" Width="80" Click="DeleteMailButton_Click">削除</Button>
                         <Button Margin="5" Width="80" Click="MoveMailButton_Click">移動</Button>
+                        <Button Margin="5" Width="80" Click="ReConvertButton_Click">AIで再解析</Button>
+                        <Button Margin="5" Width="80" Click="OpenWebMailButton_Click">WebMailで開く</Button>
                     </StackPanel>
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
@@ -168,15 +169,29 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray">
                         <Label >データ</Label>
                         <Button Margin="5" Width="80" Click="SaveJsonButton_Click">保存</Button>
-                        <Button Margin="5" Width="80" Click="ReConvertButton_Click">AIで再解析</Button>
-                        <Button Margin="5" Width="80" Click="OpenWebMailButton_Click">WebMailで開く</Button>
+                        
+                        
                     </StackPanel>
-                    <TextBox Name="JsonTextBox" Grid.Column="2" Grid.Row="2"
-                        AcceptsReturn="True"
-                        TextWrapping="Wrap"
-                        VerticalContentAlignment="Stretch"
-                        HorizontalAlignment="Stretch"
-                        Text="{Binding Anken, Converter={StaticResource ankenToJsonConverter}, Mode=OneWay}"/>
+                    <TabControl Grid.Column="2" Grid.Row="2" Name="JsonTabControl" ItemsSource="{Binding Ankens}" SelectedItem="0" SelectionChanged="JsonTabControl_SelectionChanged">
+                        <TabControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- タブのヘッダー -->
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </TabControl.ItemTemplate>
+                        <TabControl.ContentTemplate>
+                            <DataTemplate>
+                                <!-- タブの中身 -->
+                                <TextBox Name="JsonTextBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     VerticalContentAlignment="Stretch"
+                                     HorizontalAlignment="Stretch"
+                                     Text="{Binding DataContext.Json, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataTemplate>
+                        </TabControl.ContentTemplate>
+                    </TabControl>
+                   
                 </Grid>
                
             </Grid>

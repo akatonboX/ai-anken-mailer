@@ -250,12 +250,15 @@ namespace AnkenMailer
 
         private void SaveJsonButton_Click(object sender, RoutedEventArgs e)
         {
+            
             var button = (Button)sender;
             var mailItem = (MailItem)button.DataContext;
-            Anken? anken = null;
+            var anken = (Anken)this.JsonTabControl.SelectedItem;
+
+            Anken? newAnken = null;
             try
             {
-                anken = JsonSerializer.Deserialize<Anken>(this.JsonTextBox.Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                newAnken = JsonSerializer.Deserialize<Anken>(this.ViewModel.Json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             }
             catch (JsonException exception)
@@ -264,14 +267,14 @@ namespace AnkenMailer
                 return;
             }
 
-            if (anken == null)
+            if (newAnken == null)
             {
                 MessageBox.Show("JSONの形式が不正です。変換結果がnullになりました。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-
-
+            //■indexの書き換えは許さない
+            newAnken.Index = anken.Index;
 
             //■DBに登録
 
@@ -291,22 +294,23 @@ namespace AnkenMailer
                                         ,[MaxUnitPrice]=@MaxUnitPrice
                                         ,[MinUnitPrice]=@MinUnitPrice
                                         ,[Remarks]=@Remarks
-                                    WHERE [EnvelopeId] = @EnvelopeId
+                                    WHERE [EnvelopeId] = @EnvelopeId and [Index] = @Index
                                     """;
 
             command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
-            command.Parameters.AddWithValue("@Name", anken.Name != null ? anken.Name : DBNull.Value);
-            command.Parameters.AddWithValue("@Start", anken.Start != null ? anken.Start : DBNull.Value);
-            command.Parameters.AddWithValue("@End", anken.End != null ? anken.End : DBNull.Value);
-            command.Parameters.AddWithValue("@StartYearMonth", anken.StartYearMonth != null ? anken.StartYearMonth : DBNull.Value);
-            command.Parameters.AddWithValue("@Place", anken.Place != null ? anken.Place : DBNull.Value);
-            command.Parameters.AddWithValue("@Details", anken.Details != null ? anken.Details : DBNull.Value);
-            command.Parameters.AddWithValue("@MainSkill", anken.MainSkill != null ? anken.MainSkill : DBNull.Value);
-            command.Parameters.AddWithValue("@RequiredSkills", anken.RequiredSkills != null ? string.Join(",", anken.RequiredSkills) : DBNull.Value);
-            command.Parameters.AddWithValue("@DesirableSkills", anken.DesirableSkills != null ? string.Join(",", anken.DesirableSkills) : DBNull.Value);
-            command.Parameters.AddWithValue("@MaxUnitPrice", anken.MaxUnitPrice != null ? anken.MaxUnitPrice : DBNull.Value);
-            command.Parameters.AddWithValue("@MinUnitPrice", anken.MinUnitPrice != null ? anken.MinUnitPrice : DBNull.Value);
-            command.Parameters.AddWithValue("@Remarks", anken.Remarks != null ? anken.Remarks : DBNull.Value);
+            command.Parameters.AddWithValue("@Index", anken.Index);
+            command.Parameters.AddWithValue("@Name", newAnken.Name != null ? newAnken.Name : DBNull.Value);
+            command.Parameters.AddWithValue("@Start", newAnken.Start != null ? newAnken.Start : DBNull.Value);
+            command.Parameters.AddWithValue("@End", newAnken.End != null ? newAnken.End : DBNull.Value);
+            command.Parameters.AddWithValue("@StartYearMonth", newAnken.StartYearMonth != null ? newAnken.StartYearMonth : DBNull.Value);
+            command.Parameters.AddWithValue("@Place", newAnken.Place != null ? newAnken.Place : DBNull.Value);
+            command.Parameters.AddWithValue("@Details", newAnken.Details != null ? newAnken.Details : DBNull.Value);
+            command.Parameters.AddWithValue("@MainSkill", newAnken.MainSkill != null ? newAnken.MainSkill : DBNull.Value);
+            command.Parameters.AddWithValue("@RequiredSkills", newAnken.RequiredSkills != null ? string.Join(",", newAnken.RequiredSkills) : DBNull.Value);
+            command.Parameters.AddWithValue("@DesirableSkills", newAnken.DesirableSkills != null ? string.Join(",", newAnken.DesirableSkills) : DBNull.Value);
+            command.Parameters.AddWithValue("@MaxUnitPrice", newAnken.MaxUnitPrice != null ? newAnken.MaxUnitPrice : DBNull.Value);
+            command.Parameters.AddWithValue("@MinUnitPrice", newAnken.MinUnitPrice != null ? newAnken.MinUnitPrice : DBNull.Value);
+            command.Parameters.AddWithValue("@Remarks", newAnken.Remarks != null ? newAnken.Remarks : DBNull.Value);
             try
             {
                 command.ExecuteNonQuery();
@@ -318,8 +322,9 @@ namespace AnkenMailer
             }
 
             //■mailItemListに登録
-           
-            mailItem.Anken = anken;
+
+            mailItem.Ankens[(int)newAnken.Index] = newAnken;
+            mailItem.RefreshView();
         }
 
         private async void ReConvertButton_Click(object sender, RoutedEventArgs e)
@@ -345,6 +350,26 @@ namespace AnkenMailer
         {
             var button = (Button)sender;
             var mailItem = (MailItem)button.DataContext;
+            if (MessageBox.Show("メールを削除しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                using (var client = IMap.Open())
+                {
+
+                    var destFolder = client.GetFolder("INBOX.Trash");
+                    var srcFolder = client.GetFolder(mailItem.FolderPath);
+                    srcFolder.Open(FolderAccess.ReadWrite);
+                    srcFolder.MoveTo(mailItem.UId, destFolder);
+                    this.ViewModel.MailItems.Remove(mailItem);
+                }
+
+            }
+        }
+
+        private void MoveMailButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            var button = (Button)sender;
+            var mailItem = (MailItem)button.DataContext;
             using (var client = IMap.Open())
             {
 
@@ -362,25 +387,7 @@ namespace AnkenMailer
                     this.ViewModel.MailItems.Remove(mailItem);
                 }
             }
-        }
-
-        private void MoveMailButton_Click(object sender, RoutedEventArgs e)
-        {
-            var button = (Button)sender;
-            var mailItem = (MailItem)button.DataContext;
-            if (MessageBox.Show("メールを削除しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                using (var client = IMap.Open())
-                {
-
-                    var destFolder = client.GetFolder("INBOX.Trash");
-                    var srcFolder = client.GetFolder(mailItem.FolderPath);
-                    srcFolder.Open(FolderAccess.ReadWrite);
-                    srcFolder.MoveTo(mailItem.UId, destFolder);
-                    this.ViewModel.MailItems.Remove(mailItem);
-                }
-
-            }
+           
                 
             
         }
@@ -589,6 +596,32 @@ namespace AnkenMailer
 
             public int Count { get; set; }
         }
+
+
+
+        private void JsonTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            
+            var tabControl = (TabControl)sender;
+
+            //■未選択の場合、最初を選択する
+            if(tabControl.SelectedIndex < 0)
+            {
+                tabControl.SelectedIndex = 0;
+            }
+           
+
+            //■選択中の案件をJSON化
+            var anken = (Anken)tabControl.SelectedItem;
+            if (anken != null)
+            {
+                this.ViewModel.Json = JsonSerializer.Serialize(anken, new JsonSerializerOptions
+                {
+                    WriteIndented = true, // 整形出力
+                    Encoder = JavaScriptEncoder.Create(UnicodeRanges.All) // Unicodeエンコードを防止（日本語などをそのまま出力）
+                });
+            }
+        }
     }
 
     public class MainWindowViewModel : ObservableObject
@@ -600,6 +633,7 @@ namespace AnkenMailer
         private string? statusMessage = null;
         private string? statusMessageDetail = null;
         private ColumnFilters columnFilters = new ColumnFilters();
+        private string? json = "hoge";//JSONの一時的な格納用
 
         public ObservableCollection<MailFolder> MailFolders
         {
@@ -672,7 +706,11 @@ namespace AnkenMailer
             get => this.columnFilters;
             set => this.SetProperty(ref this.columnFilters, value);
         }
-
+        public string? Json
+        {
+            get => this.json;
+            set => this.SetProperty(ref this.json, value);
+        }
         public void Reflesh()
         {
             this.OnPropertyChanged(nameof(MailItems));
@@ -698,31 +736,5 @@ namespace AnkenMailer
         }
 
     }
-    public class AnkenToJsonConverter : IValueConverter
-    {
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            var anken = value as Anken;
-            if (anken == null)
-            {
-                return null;
-            }
-
-
-            var json = JsonSerializer.Serialize(anken, new JsonSerializerOptions
-            {
-                WriteIndented = true, // 整形出力
-                Encoder = JavaScriptEncoder.Create(UnicodeRanges.All) // Unicodeエンコードを防止（日本語などをそのまま出力）
-            });
-            return json;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-
-    }
-
 
 }

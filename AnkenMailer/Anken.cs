@@ -9,6 +9,7 @@ namespace AnkenMailer
 {
     public class Anken : ObservableObject
     {
+        private int? index;
         private string? name;
         private string? start;
         private string? startYearMonth;
@@ -21,7 +22,11 @@ namespace AnkenMailer
         private int? maxUnitPrice;
         private int? minUnitPrice;
         private string? remarks;
-
+        public int? Index
+        {
+            get => this.index;
+            set => this.SetProperty(ref this.index, value);
+        }
 
         public string? Name
         {
