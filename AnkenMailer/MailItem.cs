@@ -23,7 +23,7 @@ namespace AnkenMailer
         
         private MailKit.Envelope envelope;
         private MailMessage? message = null;
-        private Anken? anken = null;
+        private IList<Anken>? ankens = null;
 
         public long? Id
         {
@@ -68,44 +68,54 @@ namespace AnkenMailer
             get => this.message;
             set => this.SetProperty(ref this.message, value);
         }
-        public Anken? Anken
+        public IList<Anken>? Ankens
         {
-            get => this.anken;
+            get => this.ankens;
             set
             {
-                this.SetProperty(ref this.anken, value);
-                this.OnPropertyChanged(nameof(AnkenName));
-                this.OnPropertyChanged(nameof(MainSkill));
-                this.OnPropertyChanged(nameof(StartYearMonth));
-                this.OnPropertyChanged(nameof(Place));
-                this.OnPropertyChanged(nameof(MaxUnitPrice));
-                this.OnPropertyChanged(nameof(MinUnitPrice));
-                this.OnPropertyChanged(nameof(Remarks));
-                this.OnPropertyChanged(nameof(Details));
-                this.OnPropertyChanged(nameof(RequiredSkills));
-                this.OnPropertyChanged(nameof(DesirableSkills));
-                this.OnPropertyChanged(nameof(Start));
-                this.OnPropertyChanged(nameof(End));
+                this.SetProperty(ref this.ankens, value);
+                this.RefreshView();
             }
         }
+
+       
 
         //ここからViewプロパティ。DataGridのため
         public string? Subject => this.Envelope.Subject;
         public string Sender => this.Envelope.Sender.ToString();
         public string? Date => this.Envelope.Date?.ToString("yyyy/MM/dd HH:mm:ss");
-        public string? AnkenName => this.Anken?.Name;
-        public string? MainSkill => this.Anken?.MainSkill;
-        public string? StartYearMonth => this.Anken?.StartYearMonth;
-        public string? Place => this.Anken?.Place;
-        public int? MaxUnitPrice => this.Anken?.MaxUnitPrice;
-        public int? MinUnitPrice => this.Anken?.MinUnitPrice;
-        public string? Remarks => this.Anken?.Remarks;
-        public string? Details => this.Anken?.Details;
-        public string? RequiredSkills => this.Anken == null ? null : string.Join(",", this.Anken.RequiredSkills);
-        public string? DesirableSkills => this.Anken == null ? null : string.Join(",", this.Anken.DesirableSkills);
-        public string? Start => this.Anken?.Start;
-        public string? End => this.Anken?.End;
+        public int? AnkenCount => this.Ankens?.Count;
+        public string? AnkenName => this.Ankens?[0]?.Name;
+        public string? MainSkill => this.Ankens?[0]?.MainSkill;
+        public string? StartYearMonth => this.Ankens?[0]?.StartYearMonth;
+        public string? Place => this.Ankens?[0].Place;
+        public int? MaxUnitPrice => this.Ankens?[0]?.MaxUnitPrice;
+        public int? MinUnitPrice => this.Ankens?[0]?.MinUnitPrice;
+        public string? Remarks => this.Ankens?[0]?.Remarks;
+        public string? Details => this.Ankens?[0]?.Details;
+        public string? RequiredSkills => this.Ankens == null ? null : string.Join(",", this.Ankens[0].RequiredSkills);
+        public string? DesirableSkills => this.Ankens == null ? null : string.Join(",", this.Ankens[0].DesirableSkills);
+        public string? Start => this.Ankens?[0]?.Start;
+        public string? End => this.Ankens?[0]?.End;
 
+
+        public void RefreshView()
+        {
+            this.OnPropertyChanged(nameof(AnkenCount));
+            this.OnPropertyChanged(nameof(AnkenName));
+            this.OnPropertyChanged(nameof(MainSkill));
+            this.OnPropertyChanged(nameof(StartYearMonth));
+            this.OnPropertyChanged(nameof(Place));
+            this.OnPropertyChanged(nameof(MaxUnitPrice));
+            this.OnPropertyChanged(nameof(MinUnitPrice));
+            this.OnPropertyChanged(nameof(Remarks));
+            this.OnPropertyChanged(nameof(Details));
+            this.OnPropertyChanged(nameof(RequiredSkills));
+            this.OnPropertyChanged(nameof(DesirableSkills));
+            this.OnPropertyChanged(nameof(Start));
+            this.OnPropertyChanged(nameof(End));
+
+        }
     }
 
     public class MailMessage
