@@ -92,22 +92,29 @@ namespace AnkenMailer
        
 
         //ここからViewプロパティ。DataGridのため
+        private Anken? TopAnken
+        {
+            get
+            {
+                return this.Ankens == null || this.Ankens.Count == 0 ? null : this.Ankens[0];
+            }
+        }
         public string? Subject => this.Envelope.Subject;
         public string Sender => this.Envelope.Sender.ToString();
         public string? Date => this.Envelope.Date?.ToString("yyyy/MM/dd HH:mm:ss");
         public int? AnkenCount => this.Ankens?.Count;
-        public string? AnkenName => this.Ankens?[0]?.Name;
-        public string? MainSkill => this.Ankens?[0]?.MainSkill;
-        public string? StartYearMonth => this.Ankens?[0]?.StartYearMonth;
-        public string? Place => this.Ankens?[0].Place;
-        public int? MaxUnitPrice => this.Ankens?[0]?.MaxUnitPrice;
-        public int? MinUnitPrice => this.Ankens?[0]?.MinUnitPrice;
-        public string? Remarks => this.Ankens?[0]?.Remarks;
-        public string? Details => this.Ankens?[0]?.Details;
-        public string? RequiredSkills => this.Ankens == null ? null : string.Join(",", this.Ankens[0].RequiredSkills);
-        public string? DesirableSkills => this.Ankens == null ? null : string.Join(",", this.Ankens[0].DesirableSkills);
-        public string? Start => this.Ankens?[0]?.Start;
-        public string? End => this.Ankens?[0]?.End;
+        public string? AnkenName => this.TopAnken?.Name;
+        public string? MainSkill => this.TopAnken?.MainSkill;
+        public string? StartYearMonth => this.TopAnken?.StartYearMonth;
+        public string? Place => this.TopAnken?.Place;
+        public int? MaxUnitPrice => this.TopAnken?.MaxUnitPrice;
+        public int? MinUnitPrice => this.TopAnken?.MinUnitPrice;
+        public string? Remarks => this.TopAnken?.Remarks;
+        public string? Details => this.TopAnken?.Details;
+        public string? RequiredSkills => this.TopAnken == null ? null : string.Join(",", TopAnken.RequiredSkills);
+        public string? DesirableSkills => this.TopAnken == null ? null : string.Join(",", TopAnken.DesirableSkills);
+        public string? Start => this.TopAnken?.Start;
+        public string? End => this.TopAnken?.End;
 
         public bool? HasError => this.AnkenHeader?.HasError;
 

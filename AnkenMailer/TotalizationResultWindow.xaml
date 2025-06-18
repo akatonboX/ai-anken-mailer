@@ -10,6 +10,6 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Button Margin="5" Width="100" Click="CopyButton_Click">コピー</Button>
         </StackPanel>
-        <DataGrid ItemsSource="{Binding}" />
+        <DataGrid x:Name="dataGrid" ItemsSource="{Binding}" ClipboardCopyMode="IncludeHeader" />
     </DockPanel>
 </Window>

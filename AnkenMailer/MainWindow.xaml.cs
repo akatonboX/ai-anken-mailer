@@ -189,8 +189,15 @@ namespace AnkenMailer
                             .OfType<object>() // DataGridが内部で使うDataRowViewなどを避けるため
                             .Select(item =>
                             {
-                                var prop = item.GetType().GetProperty(headerName);
-                                return prop?.GetValue(item);
+                                try
+                                {
+                                    var prop = item.GetType().GetProperty(headerName);
+                                    return prop?.GetValue(item);
+                                }
+                                catch (Exception ex)
+                                {
+                                    return null;
+                                }
                             })
                             .OrderBy(v => v)
                             .Distinct()

@@ -29,7 +29,9 @@ namespace AnkenMailer
 
         private void CopyButton_Click(object sender, RoutedEventArgs e)
         {
-
+            this.dataGrid.SelectAllCells();
+            ApplicationCommands.Copy.Execute(null, this.dataGrid);
+            this.dataGrid.UnselectAllCells();
         }
     }
 }
