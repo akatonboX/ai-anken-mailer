@@ -432,6 +432,10 @@ namespace AnkenMailer
         private void MoveMailListButton_Click(object sender, RoutedEventArgs e)
         {
 
+            if (MessageBox.Show("表示されているメールをすべて移動しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+            {
+                return;
+            }
             var targets = this.mailItemList.Items.Cast<MailItem>().ToList();
             if(targets.Count == 0)
             {
