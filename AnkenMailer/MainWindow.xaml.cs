@@ -658,6 +658,42 @@ namespace AnkenMailer
                 });
             }
         }
+
+        private void ShowDatabaseFileSizeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var file = new FileInfo(App.CurrentApp.DatabaseFilePath);
+            MessageBox.Show($"{file.Length / (1024.0 + 1024.0)} MB", "データベースのファイルサイズ", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void optimizeDatabaseFileSizeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("ファイルを最適化しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                //■最初のファイルサイズを取得
+                var size = (new FileInfo(App.CurrentApp.DatabaseFilePath)).Length;
+
+
+                //■ANALYZEとVACUUMの実行
+                using (var command = App.CurrentApp.Connection.CreateCommand())
+                {
+                    command.CommandText = "ANALYZE;";
+                    command.ExecuteNonQuery();
+                }
+
+                using (var command = App.CurrentApp.Connection.CreateCommand())
+                {
+                    command.CommandText = "VACUUM;";
+                    command.ExecuteNonQuery();
+                }
+
+                //■新しいサイズ
+                var mewSize = (new FileInfo(App.CurrentApp.DatabaseFilePath)).Length;
+
+                MessageBox.Show($"最適化が完了しました。({size / (1024.0 + 1024.0)} MB → ({mewSize / (1024.0 + 1024.0)} MB)", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+          
+
+        }
     }
 
     public class MainWindowViewModel : ObservableObject

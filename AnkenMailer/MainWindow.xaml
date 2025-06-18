@@ -23,6 +23,8 @@
                 <MenuItem Header="標準設定" Click="GeneralSettingsMenuItem_Click"/>
                 <MenuItem Header="データベースのエクスポート" Click="ExportDatabaseMenuItem_Click"/>
                 <MenuItem Header="データベースのインポート" Click="ImportDatabaseMenuItem_Click"/>
+                <MenuItem Header="データベースファイルのサイズを確認" Click="ShowDatabaseFileSizeMenuItem_Click"/>
+                <MenuItem Header="データベースファイルの最適化" Click="optimizeDatabaseFileSizeMenuItem_Click"/>
             </MenuItem>
             <MenuItem Header="集計">
                 <MenuItem Header="フォルダ/メインスキル/単価毎に件数を集計" Click="Totalization01MenuItem_Click"/>
