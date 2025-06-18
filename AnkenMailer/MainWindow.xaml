@@ -121,7 +121,7 @@
                     ShowsPreview="True"
                     Height="2"
                     />
-                <Grid  Grid.Row="2" Visibility="{Binding Converter={StaticResource nullToVlisiblityConverter}}">
+                <Grid  Grid.Row="2" DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}" Visibility="{Binding Converter={StaticResource nullToVlisiblityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="400"/>
                         <ColumnDefinition Width="Auto" />
@@ -171,11 +171,11 @@
                                 ShowsPreview="True"
                                 Width="2" Cursor="SizeWE"
                             />
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NotNullableBoolToVlisiblityConverter}}">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray" Visibility="{Binding Path=HasError, Converter={StaticResource NotNullableBoolToVlisiblityConverter}}">
                         <Label >データ</Label>
                         <Button Margin="5" Width="80" Click="SaveJsonButton_Click">保存</Button>
                     </StackPanel>
-                    <TabControl Grid.Column="2" Grid.Row="2" Name="JsonTabControl" ItemsSource="{Binding Ankens}" SelectedItem="0" SelectionChanged="JsonTabControl_SelectionChanged" DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NotNullableBoolToVlisiblityConverter}}">
+                    <TabControl Grid.Column="2" Grid.Row="2" Name="JsonTabControl" ItemsSource="{Binding Ankens}" SelectedItem="0" SelectionChanged="JsonTabControl_SelectionChanged" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NotNullableBoolToVlisiblityConverter}}">
                         <TabControl.ItemTemplate>
                             <DataTemplate>
                                 <!-- タブのヘッダー -->
@@ -194,10 +194,10 @@
                             </DataTemplate>
                         </TabControl.ContentTemplate>
                     </TabControl>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NullableBoolToVlisiblityConverter}}">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray" Visibility="{Binding Path=HasError, Converter={StaticResource NullableBoolToVlisiblityConverter}}">
                         <Label >解析エラー</Label>
                     </StackPanel>
-                    <Grid Grid.Column="2" Grid.Row="2" DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}"  Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NullableBoolToVlisiblityConverter}}">
+                    <Grid Grid.Column="2" Grid.Row="2" DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}"  Visibility="{Binding Path=HasError, Converter={StaticResource NullableBoolToVlisiblityConverter}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*" />
