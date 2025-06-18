@@ -55,7 +55,14 @@ namespace AnkenMailer
                         [EnvelopeId]
                         ,[Folder]
                     )
-                    SELECT [EnvelopeId] ,@Folder from [Envelope] WHERE [MessageId]=@MessageId and [From] = @From;
+                    SELECT 
+                        [EnvelopeId] 
+                        ,@Folder 
+                    from [Envelope] 
+                    WHERE 
+                        [MessageId] = @MessageId 
+                        and [From] = @From
+                        and not exists (select * from memdb.[{this.TempTableName}] where [EnvelopeId] = Envelope.EnvelopeId);
                     """;
                     command.Parameters.Add("@MessageId", SqliteType.Text);
                     command.Parameters.Add("@From", SqliteType.Text);

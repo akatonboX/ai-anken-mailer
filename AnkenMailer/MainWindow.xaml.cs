@@ -582,8 +582,8 @@ namespace AnkenMailer
                     command.CommandText = $"""
                         select
                             MainSkill
-                            , Folder
                             , Price
+                            , Folder
                             , COUNT(*) as Cnt
                         from (
                             select 
@@ -604,13 +604,13 @@ namespace AnkenMailer
                         where
                             Price is not null
                         group by 
-                            Folder
-                            , MainSkill
+                            MainSkill
                             , Price
+                            , Folder                           
                         order by
-                            Folder
-                            , MainSkill
+                            MainSkill
                             , Price
+                            , Folder
 
                         """;
                     
