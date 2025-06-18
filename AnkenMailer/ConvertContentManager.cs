@@ -17,6 +17,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Documents;
+using System.Windows.Input;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AnkenMailer
 {
@@ -64,6 +67,8 @@ namespace AnkenMailer
 
 #pragma warning disable CS4014 // この呼び出しは待機されなかったため、現在のメソッドの実行は呼び出しの完了を待たずに続行されます
             var cancelToken = this.cts.Token;
+            DateTime now = DateTime.Now;
+
             Task.Run(async () =>
             {
                 progress.Report(new Progress(0, "処理中..."));
@@ -96,7 +101,7 @@ namespace AnkenMailer
                     })();
 
                     var index = 0;
-                    foreach (var mailItem in mailItems)
+                    foreach (var mailItem in mailItems)//■パラレル実行しても、imapサーバやAzure OpenAIがエラーを起こすのでシングル実行
                     {
                         cancelToken.ThrowIfCancellationRequested();
 
@@ -155,10 +160,10 @@ namespace AnkenMailer
                                 mailItem.Id = command.ExecuteScalar() as long?;
                             }
                         }
-                        //■メッセージの保存
+                        //■データ解析
                         if (mailItem.Id != null)
                         {
-                            //■存在確認
+                            //■Messageの取得と保存
                             var mailMessage = new Func<MailMessage?>(() =>
                             {
                                 using var command = App.CurrentApp.Connection.CreateCommand();
@@ -232,185 +237,225 @@ namespace AnkenMailer
                             }
                             mailItem.Message = mailMessage;
 
-                            //■JSONにコンバート
+                            //■案件情報の取得と保存
                             {
-                                //■存在確認
-                                var ankens = new Func<IList<Anken>?>(() =>
+
+                                //■AnkenHeader取得
+                                var currentAnkenHeader = new Func<AnkenHeader?>(() =>
                                 {
-
-                                    //■Ankenの取得
-                                    var list = new List<Anken>();
+                                    //■取得
+                                    using var command = App.CurrentApp.Connection.CreateCommand();
+                                    command.CommandText = "select * from [AnkenHeader] where [EnvelopeId]=@envelopeId";
+                                    command.Parameters.AddWithValue("@envelopeId", mailItem.Id);
+                                    var reader = command.ExecuteReader();
+                                    if (reader.Read())
                                     {
-                                        using var command = App.CurrentApp.Connection.CreateCommand();
-                                        command.CommandText = "select * from [Anken] where [EnvelopeId]=@envelopeId";
-                                        command.Parameters.AddWithValue("@envelopeId", mailItem.Id);
-                                        using (var reader = command.ExecuteReader())
-                                        {
-                                            while (reader.Read())
-                                            {
-                                                Anken temp = new Anken();
-                                                temp.Index = reader.GetInt32("Index");
-                                                temp.Name = reader.IsDBNull("Name") ? null : reader.GetString("Name");
-                                                temp.Start = reader.IsDBNull("Start") ? null : reader.GetString("Start");
-                                                temp.End = reader.IsDBNull("End") ? null : reader.GetString("End");
-                                                temp.StartYearMonth = reader.IsDBNull("StartYearMonth") ? null : reader.GetString("StartYearMonth");
-                                                temp.Place = reader.IsDBNull("Place") ? null : reader.GetString("Place");
-                                                temp.Details = reader.IsDBNull("Details") ? null : reader.GetString("Details");
-                                                temp.MainSkill = reader.IsDBNull("MainSkill") ? null : reader.GetString("MainSkill");
-                                                temp.RequiredSkills = reader.IsDBNull("RequiredSkills") ? [] : reader.GetString("RequiredSkills").Split(",");
-                                                temp.DesirableSkills = reader.IsDBNull("DesirableSkills") ? [] : reader.GetString("DesirableSkills").Split(",");
-                                                temp.MaxUnitPrice = reader.IsDBNull("MaxUnitPrice") ? null : reader.GetInt32("MaxUnitPrice");
-                                                temp.MinUnitPrice = reader.IsDBNull("MinUnitPrice") ? null : reader.GetInt32("MinUnitPrice");
-                                                temp.Remarks = reader.IsDBNull("Remarks") ? null : reader.GetString("Remarks");
-                                                list.Add(temp);
-                                            }
-                                        }
-                                    }
-                                    if(list.Count == 0)
-                                    {
-                                        //■ヘッダの確認(すでに解析されていることの証左
-                                        using var command = App.CurrentApp.Connection.CreateCommand();
-                                        command.CommandText = "select count(*) from [AnkenHeader] where [EnvelopeId]=@envelopeId";
-                                        command.Parameters.AddWithValue("@envelopeId", mailItem.Id);
-                                        var count = (long?)command.ExecuteScalar();
-                                        if (count == null)
-                                        {
-                                            throw new Exception("select count(*) from [AnkenHeader] where [EnvelopeId]=@envelopeId が想定外のnullを返却");
-                                        }
-
-                                        return count == 0L ? null : list;
+                                        var temp = new AnkenHeader();
+                                        temp.HasError = reader.GetBoolean("HasError");
+                                        temp.ErrorMessage = reader.IsDBNull("ErrorMessage") ? null : reader.GetString("ErrorMessage");
+                                        temp.Json = reader.IsDBNull("JSON") ? null : reader.GetString("JSON");
+                                        temp.CeateDateTime = reader.IsDBNull("CeateDateTime") ? null : reader.GetString("CeateDateTime");
+                                        return temp;
                                     }
                                     else
                                     {
-                                        return list;
+                                        return null;
                                     }
+
                                 })();
 
-                                if (ankens == null)
+                                //■Ankenの取得
+                                var (ankenHeader, ankens) = new Func<(AnkenHeader, IList<Anken>)>(() =>
                                 {
-                                    if (mailMessage != null && mailMessage.Body != null)
+                                    if (currentAnkenHeader != null)
                                     {
-                                        List<ChatMessage> messages = new List<ChatMessage>()
+                                        //■DBから取得
+                                        var list = new List<Anken>();
+                                        using (var command = App.CurrentApp.Connection.CreateCommand())
                                         {
-                                            new SystemChatMessage($$"""
-                                                - あなたはプロのデータ抽出エージェントです。
-                                                - 日本語の自然文から構造化データを抽出し、次の形式でJSONとして出力してください。これは、案件の情報です。
-                                                [
-                                                    {
-                                                        name: string; //案件の名前
-                                                        start: string; //案件の開始時期。表記内容を自然文でそのまま抽出してください。
-                                                        end: string; //案件の終了時期。表記内容を自然文でそのまま抽出してください。
-                                                        startYearMonth: string; //案件の開始時期。内容を解釈し、YYYY-MM形式で出力してください。
-                                                        place: string;//作業場所
-                                                        details: string;//作業内容。複数存在する場合は、連結してひとつの文字列にしてください。
-                                                        mainSkill: string;//主な開発言語として、"JAVA",".NET", "iOS", "Android", "Pytion", "Ruby","それ以外"のどれかを選択してください。
-                                                        requiredSkills: string[];//必須の技術スタックの一覧。desirableSkillsと区別がつかない場合は、requiredSkillsに格納してください。
-                                                        desirableSkills: string[];//あると有利な技術スタックの一覧。
-                                                        maxUnitPrice: number;//単価の最大。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。
-                                                        minUnitPrice: number;//単価の最小。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。
-                                                        remarks: string;//備考
-                                                    }
-                                                ]
-                                                - javascriptではなく、正式なJSON形式にしてください。プロパティ名は""で囲う必要があります。
-                                                - 結果は必ず配列にしてください。入力に案件の情報が見つからないとき、"[]"が結果となります。
-                                                - 余計な説明や文章は出力せず、JSONのみを返してください。"```json"と"```"で囲う
-                                                必要もありません。
-                                                - 日本語の自然文に複数の案件情報が記載されることがあります。
-                                                - 今日は、{{mailItem.Envelope.Date:yyyy-MM-dd}}です。自然文に記載される日付は、常に未来です。
-                                                - 決して、"..."等で、データを省略しないでください。
-                                                """),
-                                            new UserChatMessage(mailMessage.Body),
-                                        };
-
-                                        var response = chatClient.CompleteChat(messages);
-
-                                        //JSONの形式チェック
-                                        var json = response.Value.Content[0].Text;
-                                        try
+                                            command.CommandText = "select * from [Anken] where [EnvelopeId]=@envelopeId";
+                                            command.Parameters.AddWithValue("@envelopeId", mailItem.Id);
+                                            using (var reader = command.ExecuteReader())
+                                            {
+                                                while (reader.Read())
+                                                {
+                                                    Anken temp = new Anken();
+                                                    temp.Index = reader.GetInt32("Index");
+                                                    temp.Name = reader.IsDBNull("Name") ? null : reader.GetString("Name");
+                                                    temp.Start = reader.IsDBNull("Start") ? null : reader.GetString("Start");
+                                                    temp.End = reader.IsDBNull("End") ? null : reader.GetString("End");
+                                                    temp.StartYearMonth = reader.IsDBNull("StartYearMonth") ? null : reader.GetString("StartYearMonth");
+                                                    temp.Place = reader.IsDBNull("Place") ? null : reader.GetString("Place");
+                                                    temp.Details = reader.IsDBNull("Details") ? null : reader.GetString("Details");
+                                                    temp.MainSkill = reader.IsDBNull("MainSkill") ? null : reader.GetString("MainSkill");
+                                                    temp.RequiredSkills = reader.IsDBNull("RequiredSkills") ? [] : reader.GetString("RequiredSkills").Split(",");
+                                                    temp.DesirableSkills = reader.IsDBNull("DesirableSkills") ? [] : reader.GetString("DesirableSkills").Split(",");
+                                                    temp.MaxUnitPrice = reader.IsDBNull("MaxUnitPrice") ? null : reader.GetInt32("MaxUnitPrice");
+                                                    temp.MinUnitPrice = reader.IsDBNull("MinUnitPrice") ? null : reader.GetInt32("MinUnitPrice");
+                                                    temp.Remarks = reader.IsDBNull("Remarks") ? null : reader.GetString("Remarks");
+                                                    list.Add(temp);
+                                                }
+                                            }
+                                        }
+                                        return (currentAnkenHeader, list);
+                                    }
+                                    else
+                                    {
+                                        //■AIによるデータ化
+                                        var (newAnkenHeader, newAnkens) = new Func<(AnkenHeader, IList<Anken>)>(() =>
                                         {
-                                            var converted = JsonSerializer.Deserialize<Anken[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                                            if (converted != null) 
-                                                ankens = new List<Anken>(converted);
+                                            var newAnkenHeader = new AnkenHeader();
+                                            newAnkenHeader.HasError = false;
+                                            newAnkenHeader.CeateDateTime = now.ToString("yyyy/MM/dd HH:mm:ss");
+
+                                            if (mailMessage != null && mailMessage.Body != null)
+                                            {
+                                                List<ChatMessage> messages = new List<ChatMessage>()
+                                                {
+                                                    new SystemChatMessage($$"""
+                                                        - あなたはプロのデータ抽出エージェントです。
+                                                        - 日本語の自然文から構造化データを抽出し、次の形式でJSONとして出力してください。これは、案件の情報です。
+                                                        [
+                                                            {
+                                                                name: string; //案件の名前
+                                                                start: string; //案件の開始時期。表記内容を自然文でそのまま抽出してください。
+                                                                end: string; //案件の終了時期。表記内容を自然文でそのまま抽出してください。
+                                                                startYearMonth: string; //案件の開始時期。内容を解釈し、YYYY-MM形式で出力してください。
+                                                                place: string;//作業場所
+                                                                details: string;//作業内容。複数存在する場合は、連結してひとつの文字列にしてください。
+                                                                mainSkill: string;//主な開発言語として、"JAVA",".NET", "iOS", "Android", "Pytion", "Ruby","それ以外"のどれかを選択してください。
+                                                                requiredSkills: string[];//必須の技術スタックの一覧。desirableSkillsと区別がつかない場合は、requiredSkillsに格納してください。
+                                                                desirableSkills: string[];//あると有利な技術スタックの一覧。
+                                                                maxUnitPrice: number;//単価の最大。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。
+                                                                minUnitPrice: number;//単価の最小。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。
+                                                                remarks: string;//備考
+                                                            }
+                                                        ]
+                                                        - javascriptではなく、正式なJSON形式にしてください。プロパティ名は""で囲う必要があります。
+                                                        - 結果は必ず配列にしてください。入力に案件の情報が見つからないとき、"[]"が結果となります。
+                                                        - 余計な説明や文章は出力せず、JSONのみを返してください。"```json"と"```"で囲う
+                                                        必要もありません。
+                                                        - 日本語の自然文に複数の案件情報が記載されることがあります。
+                                                        - 今日は、{{mailItem.Envelope.Date:yyyy-MM-dd}}です。自然文に記載される日付は、常に未来です。
+                                                        - 決して、"..."等で、データを省略しないでください。
+                                                        """),
+                                                    new UserChatMessage(mailMessage.Body),
+                                                };
+
+                                                var response = chatClient.CompleteChat(messages);
+
+                                                //JSONの形式チェック
+                                                var json = response.Value.Content[0].Text;
+                                                try
+                                                {
+                                                    var converted = JsonSerializer.Deserialize<Anken[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); 
+                                                    return (newAnkenHeader, converted != null ? new List<Anken>(converted) : new List<Anken>());
+                                                }
+                                                catch (JsonException exception)
+                                                {
+                                                    //エラーを記録して続行
+                                                    newAnkenHeader.HasError = true;
+                                                    newAnkenHeader.ErrorMessage = exception.Message;
+                                                    newAnkenHeader.Json = json;
+                                                    return (newAnkenHeader, new List<Anken>());
+                                                }
+                                            }
                                             else
-                                                ankens = new List<Anken>();
+                                            {
+                                                return (newAnkenHeader, new List<Anken>());
+                                            }
+                                        })();
 
-                                        }
-                                        catch (JsonException exception)
+                                        //■DBに登録
                                         {
-                                            throw new Exception("Jsonの形式が不正です");
+                                            //■AnkenHeader
+                                            {
+                                               using var command = App.CurrentApp.Connection.CreateCommand();
+                                               command.CommandText = """
+                                                INSERT INTO [AnkenHeader]
+                                                      ([EnvelopeId]
+                                                      ,[HasError]
+                                                      ,[ErrorMessage]
+                                                      ,[JSON]
+                                                      ,[CeateDateTime])
+                                                VALUES (
+                                                       @EnvelopeId
+                                                      ,@HasError
+                                                      ,@ErrorMessage
+                                                      ,@JSON
+                                                      ,@CeateDateTime
+                                                );
+                                                """;
+                                                command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
+                                                command.Parameters.AddWithValue("@HasError", newAnkenHeader.HasError);
+                                                command.Parameters.AddWithValue("@ErrorMessage", newAnkenHeader.ErrorMessage == null ? DBNull.Value : newAnkenHeader.ErrorMessage);
+                                                command.Parameters.AddWithValue("@JSON", newAnkenHeader.Json == null ? DBNull.Value : newAnkenHeader.Json);
+                                                command.Parameters.AddWithValue("@CeateDateTime", newAnkenHeader.CeateDateTime);
+                                                command.ExecuteNonQuery();
+                                            }
+                                            //■[Anken]
+                                            for (var i = 0; i < newAnkens.Count; i++)
+                                            {
+                                                var anken = newAnkens[i];
+                                                anken.Index = i;
+                                                using var command = App.CurrentApp.Connection.CreateCommand();
+                                                command.CommandText = """
+                                                INSERT INTO [Anken]
+                                                      ([EnvelopeId]
+                                                      ,[Index]
+                                                      ,[Name]
+                                                      ,[Start]
+                                                      ,[End]
+                                                      ,[StartYearMonth]
+                                                      ,[Place]
+                                                      ,[Details]
+                                                      ,[MainSkill]
+                                                      ,[RequiredSkills]
+                                                      ,[DesirableSkills]
+                                                      ,[MaxUnitPrice]
+                                                      ,[MinUnitPrice]
+                                                      ,[Remarks])
+                                                VALUES (
+                                                       @EnvelopeId
+                                                      ,@Index
+                                                      ,@Name
+                                                      ,@Start
+                                                      ,@End
+                                                      ,@StartYearMonth
+                                                      ,@Place
+                                                      ,@Details
+                                                      ,@MainSkill
+                                                      ,@RequiredSkills
+                                                      ,@DesirableSkills
+                                                      ,@MaxUnitPrice
+                                                      ,@MinUnitPrice
+                                                      ,@Remarks);
+                                                """;
+
+                                                command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
+                                                command.Parameters.AddWithValue("@Index", anken.Index);
+                                                command.Parameters.AddWithValue("@Name", anken.Name != null ? anken.Name : DBNull.Value);
+                                                command.Parameters.AddWithValue("@Start", anken.Start != null ? anken.Start : DBNull.Value);
+                                                command.Parameters.AddWithValue("@End", anken.End != null ? anken.End : DBNull.Value);
+                                                command.Parameters.AddWithValue("@StartYearMonth", anken.StartYearMonth != null ? anken.StartYearMonth : DBNull.Value);
+                                                command.Parameters.AddWithValue("@Place", anken.Place != null ? anken.Place : DBNull.Value);
+                                                command.Parameters.AddWithValue("@Details", anken.Details != null ? anken.Details : DBNull.Value);
+                                                command.Parameters.AddWithValue("@MainSkill", anken.MainSkill != null ? anken.MainSkill : DBNull.Value);
+                                                command.Parameters.AddWithValue("@RequiredSkills", anken.RequiredSkills != null ? string.Join(",", anken.RequiredSkills) : DBNull.Value);
+                                                command.Parameters.AddWithValue("@DesirableSkills", anken.DesirableSkills != null ? string.Join(",", anken.DesirableSkills) : DBNull.Value);
+                                                command.Parameters.AddWithValue("@MaxUnitPrice", anken.MaxUnitPrice != null ? anken.MaxUnitPrice : DBNull.Value);
+                                                command.Parameters.AddWithValue("@MinUnitPrice", anken.MinUnitPrice != null ? anken.MinUnitPrice : DBNull.Value);
+                                                command.Parameters.AddWithValue("@Remarks", anken.Remarks != null ? anken.Remarks : DBNull.Value);
+                                                command.ExecuteNonQuery();
+                                            }
                                         }
+                                        return (newAnkenHeader, newAnkens);
                                     }
 
-                                    //DBに登録
-                                    if (ankens != null)
-                                    {
-                                        //■AnkenHeader
-                                        {
-                                            using var command = App.CurrentApp.Connection.CreateCommand();
-                                            command.CommandText = """
-                                            INSERT INTO [AnkenHeader]([EnvelopeId])
-                                            VALUES (@EnvelopeId);
-                                            """;
-                                            command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
-                                            command.ExecuteNonQuery();
-                                        }
-                                        //■[Anken]
-                                        for(var i = 0; i < ankens.Count; i++)
-                                        {
-                                            var anken = ankens[i];
-                                            anken.Index = i;
-                                            using var command = App.CurrentApp.Connection.CreateCommand();
-                                            command.CommandText = """
-                                            INSERT INTO [Anken]
-                                                  ([EnvelopeId]
-                                                  ,[Index]
-                                                  ,[Name]
-                                                  ,[Start]
-                                                  ,[End]
-                                                  ,[StartYearMonth]
-                                                  ,[Place]
-                                                  ,[Details]
-                                                  ,[MainSkill]
-                                                  ,[RequiredSkills]
-                                                  ,[DesirableSkills]
-                                                  ,[MaxUnitPrice]
-                                                  ,[MinUnitPrice]
-                                                  ,[Remarks])
-                                            VALUES (
-                                                   @EnvelopeId
-                                                  ,@Index
-                                                  ,@Name
-                                                  ,@Start
-                                                  ,@End
-                                                  ,@StartYearMonth
-                                                  ,@Place
-                                                  ,@Details
-                                                  ,@MainSkill
-                                                  ,@RequiredSkills
-                                                  ,@DesirableSkills
-                                                  ,@MaxUnitPrice
-                                                  ,@MinUnitPrice
-                                                  ,@Remarks);
-                                            """;
+                                })();
 
-                                            command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
-                                            command.Parameters.AddWithValue("@Index", anken.Index);
-                                            command.Parameters.AddWithValue("@Name", anken.Name != null ? anken.Name : DBNull.Value);
-                                            command.Parameters.AddWithValue("@Start", anken.Start != null ? anken.Start : DBNull.Value);
-                                            command.Parameters.AddWithValue("@End", anken.End != null ? anken.End : DBNull.Value);
-                                            command.Parameters.AddWithValue("@StartYearMonth", anken.StartYearMonth != null ? anken.StartYearMonth : DBNull.Value);
-                                            command.Parameters.AddWithValue("@Place", anken.Place != null ? anken.Place : DBNull.Value);
-                                            command.Parameters.AddWithValue("@Details", anken.Details != null ? anken.Details : DBNull.Value);
-                                            command.Parameters.AddWithValue("@MainSkill", anken.MainSkill != null ? anken.MainSkill : DBNull.Value);
-                                            command.Parameters.AddWithValue("@RequiredSkills", anken.RequiredSkills != null ? string.Join(",", anken.RequiredSkills) : DBNull.Value);
-                                            command.Parameters.AddWithValue("@DesirableSkills", anken.DesirableSkills != null ? string.Join(",", anken.DesirableSkills) : DBNull.Value);
-                                            command.Parameters.AddWithValue("@MaxUnitPrice", anken.MaxUnitPrice != null ? anken.MaxUnitPrice : DBNull.Value);
-                                            command.Parameters.AddWithValue("@MinUnitPrice", anken.MinUnitPrice != null ? anken.MinUnitPrice : DBNull.Value);
-                                            command.Parameters.AddWithValue("@Remarks", anken.Remarks != null ? anken.Remarks : DBNull.Value);
-                                            command.ExecuteNonQuery();
-                                        }
-                                    }
-                                }
+                                //■メールアイテムに格納
+                                mailItem.AnkenHeader = ankenHeader;
                                 mailItem.Ankens = ankens;
 
                                 //■進捗の通知
@@ -445,6 +490,11 @@ namespace AnkenMailer
 
         public async Task ReConvert(IList<MailItem> mailItems)
         {
+            //■IDがnullのものを含んでいたら何もしない、
+            if (mailItems.Where(item => item.Id == null).Count() > 0)
+            {
+                return;
+            }
             //■現在の解析をストップ
             await this.Cnacel();
 

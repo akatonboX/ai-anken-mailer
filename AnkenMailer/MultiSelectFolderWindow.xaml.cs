@@ -4,6 +4,7 @@ using MailKit.Net.Imap;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -83,8 +84,8 @@ namespace AnkenMailer
             get => this.client;
         }
 
-        private List<IMailFolder>? folders = null;
-        public List<IMailFolder>? Folders
+        private List<IMailFolder> folders = new List<IMailFolder>();
+        public List<IMailFolder> Folders
         {
             get => this.folders;
         }
@@ -96,18 +97,24 @@ namespace AnkenMailer
 
         private void acceptButton_Click(object sender, RoutedEventArgs e)
         {
-            var folder = (FolderViewModel)this.treeView.SelectedItem;
-            if (folder == null) return;
-
-            this.DialogResult = true;
-
-            
-            this.folders = new List<IMailFolder>();
+            //■選択されたフォルダの収集\          
+            var folders = new List<IMailFolder>();
             foreach(var child in this.ViewModel.Folders)
             {
-                this.GetSelectedFolders(child, this.folders);
+                this.GetSelectedFolders(child, folders);
             }
-            
+
+            //■入力チェック
+
+            if (folders.Count == 0)
+            {
+                MessageBox.Show("選択がありません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            //■画面の終了
+            this.folders = folders;
+            this.DialogResult = true;
             this.Close();
 
         }

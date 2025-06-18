@@ -23,7 +23,9 @@ namespace AnkenMailer
         
         private MailKit.Envelope envelope;
         private MailMessage? message = null;
+        private AnkenHeader? ankenHeader = null;
         private IList<Anken>? ankens = null;
+       
 
         public long? Id
         {
@@ -68,6 +70,15 @@ namespace AnkenMailer
             get => this.message;
             set => this.SetProperty(ref this.message, value);
         }
+        public AnkenHeader? AnkenHeader
+        {
+            get => this.ankenHeader;
+            set
+            {
+                this.SetProperty(ref this.ankenHeader, value);
+                this.RefreshView();
+            }
+        }
         public IList<Anken>? Ankens
         {
             get => this.ankens;
@@ -98,6 +109,9 @@ namespace AnkenMailer
         public string? Start => this.Ankens?[0]?.Start;
         public string? End => this.Ankens?[0]?.End;
 
+        public bool? HasError => this.AnkenHeader?.HasError;
+
+
 
         public void RefreshView()
         {
@@ -114,6 +128,7 @@ namespace AnkenMailer
             this.OnPropertyChanged(nameof(DesirableSkills));
             this.OnPropertyChanged(nameof(Start));
             this.OnPropertyChanged(nameof(End));
+            this.OnPropertyChanged(nameof(HasError));
 
         }
     }

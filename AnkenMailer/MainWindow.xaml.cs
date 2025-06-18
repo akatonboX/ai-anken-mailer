@@ -331,7 +331,11 @@ namespace AnkenMailer
         {
             var button = (Button)sender;
             var mailItem = (MailItem)button.DataContext;
-
+            if(mailItem.Id == null)
+            {
+                MessageBox.Show("ロード中のため実行できません。フォルダを開きなおしてください。" , "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             await this.convertContentManager.ReConvert(new List<MailItem>() { mailItem });
         }
 
@@ -454,6 +458,13 @@ namespace AnkenMailer
 
         private async void ReConvertListButton_Click(object sender, RoutedEventArgs e)
         {
+            var mailItems = this.mailItemList.Items.Cast<MailItem>().ToList();
+            if (mailItems.Where(item => item.Id == null).Count() > 0)
+            {
+                MessageBox.Show("ロード中のため実行できません。フォルダを開きなおしてください。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             if (MessageBox.Show("表示しているすべてのメールの本文をすべて解析し直しますか？", "情報", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
 
             await this.convertContentManager.ReConvert(this.mailItemList.Items.Cast<MailItem>().ToList());
@@ -553,39 +564,64 @@ namespace AnkenMailer
             viewSource.View.Refresh();
         }
 
+
+
         private void Totalization01MenuItem_Click(object sender, RoutedEventArgs e)
         {
             var client = IMap.Open();
             var dialog = new MultiSelectFolderWindow(client);
+            
             dialog.Owner = this;
             if(dialog.ShowDialog() == true)
             {
                 var folders = dialog.Folders;
-                var result = new List<Totalization01Data>();
-                foreach(var folder in folders)
+                var result = new DataTable();
+                using (var tempTable = new TotalizationTargetTempTable(App.CurrentApp.Connection, folders))
                 {
-                    folder.Open(FolderAccess.ReadOnly);
-                    var mailItems = (from summary in folder.Fetch(0, -1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId) select new MailItem(folder.FullName, summary.UniqueId, summary.Envelope)).ToList();
-                    //this.convertContentManager.Convert()
+                    using var command = App.CurrentApp.Connection.CreateCommand();
+                    command.CommandText = $"""
+                        select
+                            MainSkill
+                            , Folder
+                            , Price
+                            , COUNT(*) as Cnt
+                        from (
+                            select 
+                                Temp.Folder
+                                , Anken.MainSkill
+                                , CASE
+                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) < 70 THEN NULL
+                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) BETWEEN 70 AND 74 THEN 70
+                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) BETWEEN 75 AND 79 THEN 75
+                                    ELSE 80
+                                END AS Price
+                            from Anken
+                            inner join Envelope
+                            on Anken.EnvelopeId = Envelope.EnvelopeId
+                            inner join memdb.[{tempTable.TempTableName}] Temp
+                            on Anken.EnvelopeId = Temp.EnvelopeId        
+                        ) Target
+                        where
+                            Price is not null
+                        group by 
+                            Folder
+                            , MainSkill
+                            , Price
+                        order by
+                            Folder
+                            , MainSkill
+                            , Price
 
-                    foreach(var mailItem in mailItems)
+                        """;
+                    
+                    using (var reader = command.ExecuteReader())
                     {
-                        //■Idの取得
-                        {
-                            using var command = App.CurrentApp.Connection.CreateCommand();
-                            command.CommandText = "select [EnvelopeId] from [Envelope] where [MessageId]=@messageId and [From] = @from;";
-                            command.Parameters.AddWithValue("@messageId", mailItem.Envelope.MessageId);
-                            command.Parameters.AddWithValue("@from", mailItem.Envelope.From.ToString());
-                            mailItem.Id = command.ExecuteScalar() as long?;
-                        }
-
-                        if(mailItem.Id != null)//DBになければ無視する
-                        {
-
-                        }
+                        result.Load(reader);
                     }
-
                 }
+                var window = new TotalizationResultWindow(result);
+                window.ShowDialog();
+
             }
         }
         private class Totalization01Data

@@ -75,9 +75,9 @@ namespace AnkenMailer
             this.Connection = new SqliteConnection(connectionStringBuilder.ToString());
             this.Connection.Open();
 
-            //■接続確認(エラーがあれば例外
+            //■memdbにアタッチ
             using var command = this.Connection.CreateCommand();
-            command.CommandText = "select * from [Envelope] where 1 = 0;";
+            command.CommandText = "ATTACH DATABASE ':memory:' AS memdb;";
             command.ExecuteNonQuery();
         }
     }

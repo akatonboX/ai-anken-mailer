@@ -13,6 +13,8 @@
             <local:ProgressLabelConverter x:Key="progressLabelConverter"/>
             <local:IsNotNullConverter x:Key="isNotNullConverter"/>
             <local:NullToVlisiblityConverter x:Key="nullToVlisiblityConverter"/>
+            <local:NullableBoolToVlisiblityConverter x:Key="NullableBoolToVlisiblityConverter"/>
+            <local:NotNullableBoolToVlisiblityConverter x:Key="NotNullableBoolToVlisiblityConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
@@ -90,6 +92,8 @@
                             <DataGridTextColumn Header="件名" Binding="{Binding Subject}"  IsReadOnly="True" Width="300" SortMemberPath="Subject" />
                             <DataGridTextColumn Header="送信元" Binding="{Binding Sender}"  IsReadOnly="True" Width="100" SortMemberPath="Sender" />
                             <DataGridTextColumn Header="送信日時" Binding="{Binding Date}" IsReadOnly="True" SortMemberPath="Date"  />
+                            <DataGridTextColumn Header="案件数" Binding="{Binding AnkenCount}" IsReadOnly="True" Width="60" />
+                            <DataGridTextColumn Header="解析エラーの有無" Binding="{Binding HasError}" IsReadOnly="True" Width="60" />
                             <DataGridTextColumn Header="案件名" Binding="{Binding AnkenName}" IsReadOnly="True" SortMemberPath="AnkenName"  />
                             <DataGridTextColumn Header="メインスキル" Binding="{Binding MainSkill}" IsReadOnly="True" SortMemberPath="MainSkill"  />
                             <DataGridTextColumn Header="開始月" Binding="{Binding StartYearMonth}" IsReadOnly="True" SortMemberPath="StartYearMonth"  />
@@ -115,7 +119,7 @@
                     ShowsPreview="True"
                     Height="2"
                     />
-                <Grid Grid.Row="2"  DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}" Visibility="{Binding Converter={StaticResource nullToVlisiblityConverter}}">
+                <Grid  Grid.Row="2" Visibility="{Binding Converter={StaticResource nullToVlisiblityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="400"/>
                         <ColumnDefinition Width="Auto" />
@@ -150,29 +154,26 @@
                         <Label Grid.Row="2">日付：</Label>
                         <TextBox Grid.Row="2" Grid.Column="1" IsReadOnly="True" VerticalAlignment="Center" BorderThickness="1" Text="{Binding Date, Mode=OneWay}"/>
                         <TextBox Grid.Row="3" Grid.ColumnSpan="2"
-                            AcceptsReturn="True"
-                            TextWrapping="Wrap"
-                            VerticalContentAlignment="Stretch"
-                            HorizontalAlignment="Stretch"
-                            IsReadOnly="True"
-                            Text="{Binding ElementName=mailItemList, Path=SelectedItem, Converter={StaticResource mailItemToBodyConverter}}"/>
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    VerticalContentAlignment="Stretch"
+                                    HorizontalAlignment="Stretch"
+                                    IsReadOnly="True"
+                                    Text="{Binding ElementName=mailItemList, Path=SelectedItem, Converter={StaticResource mailItemToBodyConverter}}"/>
                     </Grid>
 
                     <GridSplitter Grid.Column="1" Grid.RowSpan="2"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Stretch"
-                        Background="Black" 
-                        ShowsPreview="True"
-                        Width="2" Cursor="SizeWE"
-                    />
-
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray">
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Stretch"
+                                Background="Black" 
+                                ShowsPreview="True"
+                                Width="2" Cursor="SizeWE"
+                            />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NotNullableBoolToVlisiblityConverter}}">
                         <Label >データ</Label>
                         <Button Margin="5" Width="80" Click="SaveJsonButton_Click">保存</Button>
-                        
-                        
                     </StackPanel>
-                    <TabControl Grid.Column="2" Grid.Row="2" Name="JsonTabControl" ItemsSource="{Binding Ankens}" SelectedItem="0" SelectionChanged="JsonTabControl_SelectionChanged">
+                    <TabControl Grid.Column="2" Grid.Row="2" Name="JsonTabControl" ItemsSource="{Binding Ankens}" SelectedItem="0" SelectionChanged="JsonTabControl_SelectionChanged" DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NotNullableBoolToVlisiblityConverter}}">
                         <TabControl.ItemTemplate>
                             <DataTemplate>
                                 <!-- タブのヘッダー -->
@@ -183,17 +184,36 @@
                             <DataTemplate>
                                 <!-- タブの中身 -->
                                 <TextBox Name="JsonTextBox"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     VerticalContentAlignment="Stretch"
-                                     HorizontalAlignment="Stretch"
-                                     Text="{Binding DataContext.Json, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                AcceptsReturn="True"
+                                                TextWrapping="Wrap"
+                                                VerticalContentAlignment="Stretch"
+                                                HorizontalAlignment="Stretch"
+                                                Text="{Binding DataContext.Json, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </DataTemplate>
                         </TabControl.ContentTemplate>
                     </TabControl>
-                   
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Background="LightGray" Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NullableBoolToVlisiblityConverter}}">
+                        <Label >解析エラー</Label>
+                    </StackPanel>
+                    <Grid Grid.Column="2" Grid.Row="2" DataContext="{Binding ElementName=mailItemList, Path=SelectedItem}"  Visibility="{Binding ElementName=mailItemList, Path=SelectedItem.HasError, Converter={StaticResource NullableBoolToVlisiblityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Label>解析した日時</Label>
+                        <TextBox Grid.Column="1" IsReadOnly="True"  VerticalAlignment="Center" BorderThickness="1" Text="{Binding AnkenHeader.CeateDateTime, Mode=OneWay}" />
+                        <Label Grid.Row="1">エラーメッセージ</Label>
+                        <TextBox Grid.Row="1" Grid.Column="1" IsReadOnly="True" VerticalAlignment="Center" BorderThickness="1"  Text="{Binding AnkenHeader.ErrorMessage, Mode=OneWay}" />
+                        <Label Grid.Row="2">JSON</Label>
+                        <TextBox Grid.Row="2" Grid.Column="1" IsReadOnly="True" VerticalAlignment="Stretch" Margin="0 3 0 3" BorderThickness="1"  Text="{Binding AnkenHeader.Json, Mode=OneWay}" />
+                    </Grid>
                 </Grid>
-               
+
             </Grid>
         </Grid>
         

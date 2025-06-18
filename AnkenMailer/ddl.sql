@@ -29,7 +29,11 @@ CREATE TABLE [Message] (
 DROP TABLE IF EXISTS [AnkenHeader];
 CREATE TABLE [AnkenHeader] (
   [EnvelopeId] INTEGER NOT NULL
-, CONSTRAINT [PK_Anken] PRIMARY KEY ([EnvelopeId])
+  , [HasError] BOOLEAN NOT NULL DEFAULT true
+  , [ErrorMessage]  TEXT NULL
+  , [JSON]  TEXT NULL
+  , [CeateDateTime]  TEXT NULL
+, CONSTRAINT [AnkenHeader] PRIMARY KEY ([EnvelopeId])
 , FOREIGN KEY ([EnvelopeId])
     REFERENCES [Envelope]([EnvelopeId])
     ON DELETE CASCADE
@@ -55,6 +59,17 @@ CREATE TABLE [Anken] (
 , CONSTRAINT [PK_Anken] PRIMARY KEY ([EnvelopeId], [Index])
 , FOREIGN KEY ([EnvelopeId])
     REFERENCES [AnkenHeader]([EnvelopeId])
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+
+DROP TABLE IF EXISTS [TotalizationTarget];
+CREATE TABLE [TotalizationTarget] (
+  [EnvelopeId] INTEGER NOT NULL
+, CONSTRAINT [TotalizationTarget] PRIMARY KEY ([EnvelopeId])
+, FOREIGN KEY ([EnvelopeId])
+    REFERENCES [Envelope]([EnvelopeId])
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );

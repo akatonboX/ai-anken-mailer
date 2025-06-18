@@ -6,15 +6,10 @@
         xmlns:local="clr-namespace:AnkenMailer"
         mc:Ignorable="d"
         Title="フォルダの選択" Height="450" Width="800">
-    <Window.Resources>
-        <ResourceDictionary>
-            <local:NullToBooleanConverter x:Key="nullToBooleanConverter"/>
-        </ResourceDictionary>
-    </Window.Resources>
     <DockPanel>
 
         <UniformGrid DockPanel.Dock="Bottom"  Columns="2" Rows="1" Margin="10">
-            <Button x:Name="acceptButton" Click="acceptButton_Click" Width="100" IsEnabled="{Binding ElementName=treeView, Path=SelectedItem, Converter={StaticResource nullToBooleanConverter}}">OK</Button>
+            <Button x:Name="acceptButton" Click="acceptButton_Click" Width="100">OK</Button>
             <Button x:Name="cancelButton" Click="cancelButton_Click"  Width="100">キャンセル</Button>
         </UniformGrid>
         <TreeView x:Name="treeView" ItemsSource="{Binding Folders}">
