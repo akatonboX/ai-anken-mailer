@@ -25,7 +25,7 @@ namespace AnkenMailer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("pop3.lolipop.jp")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string ImapServer {
             get {
                 return ((string)(this["ImapServer"]));
@@ -37,10 +37,9 @@ namespace AnkenMailer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("993")]
         public int ImapPort {
             get {
-                return ((int)(this["ImapPort"]));
+                return ((int)(this["ImapPort"] ?? 993));
             }
             set {
                 this["ImapPort"] = value;
@@ -73,7 +72,7 @@ namespace AnkenMailer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://test2024-07-13.openai.azure.com/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Endpoint {
             get {
                 return ((string)(this["Endpoint"]));
@@ -85,7 +84,7 @@ namespace AnkenMailer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("gpt-4o")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string DeploymentName {
             get {
                 return ((string)(this["DeploymentName"]));

@@ -716,7 +716,7 @@ namespace AnkenMailer
         private string? statusMessage = null;
         private string? statusMessageDetail = null;
         private ColumnFilters columnFilters = new ColumnFilters();
-        private string? json = "hoge";//JSONの一時的な格納用
+        private string? json = "";//JSONの一時的な格納用
 
         public ObservableCollection<MailFolder> MailFolders
         {
@@ -819,5 +819,6 @@ namespace AnkenMailer
         }
 
     }
+
 
 }

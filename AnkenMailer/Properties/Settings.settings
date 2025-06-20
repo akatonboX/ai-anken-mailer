@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="ImapServer" Type="System.String" Scope="User">
-      <Value Profile="(Default)">pop3.lolipop.jp</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ImapPort" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">993</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ImapUser" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
@@ -15,10 +15,10 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Endpoint" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://test2024-07-13.openai.azure.com/</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="DeploymentName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">gpt-4o</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ApiKey" Type="System.String" Scope="User">
       <Value Profile="(Default)" />

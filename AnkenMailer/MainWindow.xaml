@@ -70,7 +70,17 @@
                 </Grid.RowDefinitions>
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="LightGray">
-                        <Label>メール一覧</Label>
+                        <Label>
+                            <TextBlock>
+                                <Run>メール一覧(</Run>
+                                <Run Text="{Binding Source={StaticResource MailItemsCollectionViewSource}, Path=Count, Mode=OneWay}" />
+                                <Run>/</Run>
+                                <Run Text="{Binding Path=MailItems.Count, Mode=OneWay}" />
+                                <Run>)</Run>
+                            </TextBlock> 
+
+                        </Label>
+                        
                         <Button Margin="5" Width="80" Click="DeleteMailListButton_Click">削除</Button>
                         <Button Margin="5" Width="80" Click="MoveMailListButton_Click">移動</Button>
                         <Button Margin="5" Width="80" Click="ReConvertListButton_Click">AIで再解析</Button>

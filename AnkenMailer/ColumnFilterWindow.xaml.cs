@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,7 +28,8 @@ namespace AnkenMailer
            
             InitializeComponent();
             //■Widnowタイトルの調整
-            this.Title = headerLabel + "のフィルタ";
+
+            //this.Title = headerLabel + "のフィルタ";
 
             //■itemsからlistの構築
             var allItem = new AllItem((CollectionViewSource)this.Resources["ItemsCollectionViewSource"]);
@@ -49,7 +51,7 @@ namespace AnkenMailer
             list.Insert(0, allItem);
 
             //■ViewModel構築
-            this.ViewModel = new ColumnFilterWindowViewModel(list);
+            this.ViewModel = new ColumnFilterWindowViewModel(list, headerLabel);
             this.ViewModel.PropertyChanged += (object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
             {
                 if(e.PropertyName == nameof(ColumnFilterWindowViewModel.SearchText))
@@ -93,10 +95,12 @@ namespace AnkenMailer
         {
             private IList<Item> items;
             private string searchText = "";
+            private string columnName = "";
 
-            public ColumnFilterWindowViewModel(IList<Item> items)
+            public ColumnFilterWindowViewModel(IList<Item> items, string columnName)
             {
                 this.items = items;
+                this.columnName = columnName;
             }
 
             private bool isItemSleep = false;
@@ -111,6 +115,13 @@ namespace AnkenMailer
                 get => this.searchText;
                 set => this.SetProperty(ref this.searchText, value);
             }
+            public string ColumnName
+            {
+                get => this.columnName;
+                set => this.SetProperty(ref this.columnName, value);
+            }
+
+
         }
         public class Item : ObservableObject
         {
@@ -198,8 +209,26 @@ namespace AnkenMailer
                 e.Accepted = item.IsAll || (item.Value == null && this.ViewModel.SearchText.Trim().Length == 0) || (item.Value != null && item.Value.ToString().IndexOf(this.ViewModel.SearchText.Trim()) >= 0);
             }
         }
+
+   
     }
 
+    public class ColumnFilterWindowTiteConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            var name = (string)values[0];
+            var count = (int)values[1];
+            var total = (int)values[2];
 
-    
+            return $"{name}のフィルタ({count - 1} / {total - 1})";
+
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }
