@@ -17,7 +17,7 @@ namespace AnkenMailer
             {
                 if (columnFilters.ContainsKey(headerName))
                 {
-                    return this.columnFilters[headerName];
+                    return columnFilters[headerName];
                 }
                 else
                 {
@@ -26,18 +26,18 @@ namespace AnkenMailer
             }
             set
             {
-                this.columnFilters[headerName] = value;
-                this.OnPropertyChanged($"Item[{headerName}]");
+                columnFilters[headerName] = value;
+                OnPropertyChanged($"Item[{headerName}]");
 
             }
         }
 
-        public Dictionary<string, IList<object?>?> Items { get => this.columnFilters; }
+        public Dictionary<string, IList<object?>?> Items { get => columnFilters; }
 
         public void Clear()
         {
-            this.columnFilters.Clear();
-            this.OnPropertyChanged("item");
+            columnFilters.Clear();
+            OnPropertyChanged("item");
         }
 
     }

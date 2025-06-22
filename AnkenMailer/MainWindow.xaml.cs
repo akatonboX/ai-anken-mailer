@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using AnkenMailer.Model;
+using CommunityToolkit.Mvvm.ComponentModel;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
@@ -35,6 +36,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
 using static AnkenMailer.ColumnFilterWindow;
+using MailFolder = AnkenMailer.Model.MailFolder;
 
 namespace AnkenMailer
 {

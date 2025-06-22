@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AnkenMailer
+namespace AnkenMailer.Model
 {
     public class Anken : ObservableObject
     {
@@ -24,71 +24,71 @@ namespace AnkenMailer
         private string? remarks;
         public int? Index
         {
-            get => this.index;
-            set => this.SetProperty(ref this.index, value);
+            get => index;
+            set => SetProperty(ref index, value);
         }
 
         public string? Name
         {
-            get => this.name;
-            set => this.SetProperty(ref this.name, value);
+            get => name;
+            set => SetProperty(ref name, value);
         }
         public string? Start
         {
-            get => this.start;
-            set => this.SetProperty(ref this.start, value);
+            get => start;
+            set => SetProperty(ref start, value);
         }
         public string? StartYearMonth
         {
-            get => this.startYearMonth;
-            set => this.SetProperty(ref this.startYearMonth, value);
+            get => startYearMonth;
+            set => SetProperty(ref startYearMonth, value);
         }
         public string? End
         {
-            get => this.end;
-            set => this.SetProperty(ref this.end, value);
+            get => end;
+            set => SetProperty(ref end, value);
         }
         public string? Place
         {
-            get => this.place;
-            set => this.SetProperty(ref this.place, value);
+            get => place;
+            set => SetProperty(ref place, value);
         }
         public string? Details
         {
-            get => this.details;
-            set => this.SetProperty(ref this.details, value);
+            get => details;
+            set => SetProperty(ref details, value);
         }
         public string? MainSkill
         {
-            get => this.mainSkill;
-            set => this.SetProperty(ref this.mainSkill, value);
+            get => mainSkill;
+            set => SetProperty(ref mainSkill, value);
         }
         public string[] RequiredSkills
         {
-            get => this.requiredSkills;
-            set => this.SetProperty(ref this.requiredSkills, value);
+            get => requiredSkills;
+            set => SetProperty(ref requiredSkills, value);
         }
         public string[] DesirableSkills
         {
-            get => this.desirableSkills;
-            set => this.SetProperty(ref this.desirableSkills, value);
+            get => desirableSkills;
+            set => SetProperty(ref desirableSkills, value);
         }
         public int? MaxUnitPrice
         {
-            get => this.maxUnitPrice;
-            set => this.SetProperty(ref this.maxUnitPrice, value);
+            get => maxUnitPrice;
+            set => SetProperty(ref maxUnitPrice, value);
         }
 
         public int? MinUnitPrice
         {
-            get => this.minUnitPrice;
-            set => this.SetProperty(ref this.minUnitPrice, value);
+            get => minUnitPrice;
+            set => SetProperty(ref minUnitPrice, value);
         }
       
         public string? Remarks
         {
-            get => this.remarks;
-            set => this.SetProperty(ref this.remarks, value);
+            get => remarks;
+            set => SetProperty(ref remarks, value);
         }
 
 

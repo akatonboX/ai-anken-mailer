@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using AnkenMailer.Model;
+using Azure;
 using Azure.AI.OpenAI;
 using HtmlAgilityPack;
 using MailKit;

@@ -1,4 +1,5 @@
-﻿using MailKit;
+﻿using AnkenMailer.Model;
+using MailKit;
 using Microsoft.Data.Sqlite;
 using Org.BouncyCastle.Crypto;
 using System;

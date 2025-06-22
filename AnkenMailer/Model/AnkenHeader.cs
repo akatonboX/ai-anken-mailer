@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace AnkenMailer
+namespace AnkenMailer.Model
 {
     public class AnkenHeader : ObservableObject
     {
@@ -18,24 +18,24 @@ namespace AnkenMailer
 
         public bool HasError
         {
-            get => this.hasError;
-            set => this.SetProperty(ref this.hasError, value);
+            get => hasError;
+            set => SetProperty(ref hasError, value);
         }
 
         public string? ErrorMessage
         {
-            get => this.errorMessage;
-            set => this.SetProperty(ref this.errorMessage, value);
+            get => errorMessage;
+            set => SetProperty(ref errorMessage, value);
         }
         public string? Json
         {
-            get => this.json;
-            set => this.SetProperty(ref this.json, value);
+            get => json;
+            set => SetProperty(ref json, value);
         }
         public string? CeateDateTime
         {
-            get => this.ceateDateTime;
-            set => this.SetProperty(ref this.ceateDateTime, value);
+            get => ceateDateTime;
+            set => SetProperty(ref ceateDateTime, value);
         }
     }
 }

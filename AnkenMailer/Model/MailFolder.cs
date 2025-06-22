@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AnkenMailer
+namespace AnkenMailer.Model
 {
     public class MailFolder : ObservableObject
     {
@@ -16,27 +16,27 @@ namespace AnkenMailer
         private bool isExpanded = true;
         public MailFolder(IMailFolder folder)
         {
-            this.fullName = folder.FullName;
-            this.name = folder.Name;
+            fullName = folder.FullName;
+            name = folder.Name;
             Children = new ObservableCollection<MailFolder>(from item in folder.GetSubfolders(false) select new MailFolder(item));
         }
 
         public string FullName
         {
-            get => this.fullName;
-            set => this.SetProperty(ref this.fullName, value);
+            get => fullName;
+            set => SetProperty(ref fullName, value);
         }
 
         public string Name
         {
-            get => this.name;
-            set => this.SetProperty(ref this.name, value);
+            get => name;
+            set => SetProperty(ref name, value);
         }
 
         public bool IsExpanded
         {
-            get => this.isExpanded;
-            set => this.SetProperty(ref this.isExpanded, value);
+            get => isExpanded;
+            set => SetProperty(ref isExpanded, value);
         }
 
         public ObservableCollection<MailFolder> Children { get; }

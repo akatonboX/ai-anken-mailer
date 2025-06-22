@@ -27,10 +27,6 @@ namespace AnkenMailer
         {
            
             InitializeComponent();
-            //■Widnowタイトルの調整
-
-            //this.Title = headerLabel + "のフィルタ";
-
             //■itemsからlistの構築
             var allItem = new AllItem((CollectionViewSource)this.Resources["ItemsCollectionViewSource"]);
             var list = items
