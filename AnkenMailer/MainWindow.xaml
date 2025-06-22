@@ -80,8 +80,15 @@
                             </TextBlock> 
 
                         </Label>
-                        
-                        <Button Margin="5" Width="80" Click="DeleteMailListButton_Click">削除</Button>
+                        <!--<Button Margin="5" Width="80" Click="DeleteMailListButton_Click">削除</Button>-->
+                        <Button Margin="5" Width="80" Click="DeleteButton_Click" Content="削除">
+                            <Button.ContextMenu>
+                                <ContextMenu x:Name="MyContextMenu">
+                                    <MenuItem Header="件名の重複したメールを削除" Click="DeleteDuplicatedMailButton_Click"/>
+                                    <MenuItem Header="削除" Click="DeleteMailListButton_Click"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
                         <Button Margin="5" Width="80" Click="MoveMailListButton_Click">移動</Button>
                         <Button Margin="5" Width="80" Click="ReConvertListButton_Click">AIで再解析</Button>
                         <Button Margin="5" Width="80" Click="CopyListButton_Click">コピー</Button>

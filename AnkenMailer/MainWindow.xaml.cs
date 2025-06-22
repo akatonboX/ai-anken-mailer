@@ -11,6 +11,7 @@ using MimeKit.Utils;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Bcpg.OpenPgp;
 using Org.BouncyCastle.Tls;
+using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -18,6 +19,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -397,6 +399,54 @@ namespace AnkenMailer
                 
             
         }
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        { 
+            var button = (Button)sender;
+            button.ContextMenu.PlacementTarget = button;
+            button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            button.ContextMenu.IsOpen = true;
+        }
+        private void DeleteDuplicatedMailButton_Click(object sender, RoutedEventArgs e)
+        {
+            var targets = this.mailItemList.Items.Cast<MailItem>().ToList();
+            if (targets.Count == 0)
+            {
+                MessageBox.Show("対象がありません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (MessageBox.Show("表示されているメールのうち、重複した件名を持つメールを削除しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                using (var client = IMap.Open())
+                {
+                    //■IMAPの準備
+                    var destFolder = client.GetFolder("INBOX.Trash");
+                    var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
+                    srcFolder.Open(FolderAccess.ReadWrite);
+
+
+                    var duplicatedMailItems = targets
+                        .GroupBy(item => item.Subject)
+                        .Where(g => g.Count() > 1)        // subject が重複しているグループだけ
+                        .SelectMany(g => // SelectMany(flatten)で、残すメールは除外する。
+                        {
+                            var maxDate = g.Max(item => item.Date);
+                            var leave = g.First(item => item.Date.Equals(maxDate));
+                            return g.Where(x => x != leave);
+                        })               
+                        .ToList();
+
+                    foreach (var target in duplicatedMailItems)
+                    {
+                        srcFolder.MoveTo(target.UId, destFolder);
+                        this.ViewModel.MailItems.Remove(target);
+                    }
+
+
+                }
+            }
+        }
+
         private void DeleteMailListButton_Click(object sender, RoutedEventArgs e)
         {
             var targets = this.mailItemList.Items.Cast<MailItem>().ToList();
@@ -724,6 +774,8 @@ namespace AnkenMailer
                 }
             }
         }
+
+
     }
 
     public class MainWindowViewModel : ObservableObject
