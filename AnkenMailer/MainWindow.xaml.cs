@@ -56,18 +56,18 @@ namespace AnkenMailer
             this.ViewModel = new MainWindowViewModel();
 
             //■解析の開始
-            this.ViewModel.PropertyChanged += async (object? sender, PropertyChangedEventArgs e) =>
-            {
-                if(e.PropertyName == "MailItems")
-                {
-                    //■現在の解析をストップ
-                    await this.convertContentManager.Cnacel();
+            //this.ViewModel.PropertyChanged += async (object? sender, PropertyChangedEventArgs e) =>
+            //{
+            //    if(e.PropertyName == "MailItems")
+            //    {
+            //        //■現在の解析をストップ
+            //        await this.convertContentManager.Cnacel();
 
-                    //■新しく選択されたフォルダの解析をスタート
-                    if(this.ViewModel.MailItems != null)
-                        await this.convertContentManager.Convert(this.ViewModel.MailItems);
-                }
-            };
+            //        //■新しく選択されたフォルダの解析をスタート
+            //        if(this.ViewModel.MailItems != null)
+            //            await this.convertContentManager.Convert(this.ViewModel.MailItems);
+            //    }
+            //};
 
             this.LoadMailFolders();
         }
@@ -122,13 +122,6 @@ namespace AnkenMailer
         {
             this.ViewModel.SelectedMailFolder = (MailFolder)e.NewValue;
 
-        }
-
-
-
-        private void detailButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show(this.ViewModel.StatusMessageDetail, "情報", MessageBoxButton.OK);
         }
 
 
@@ -675,7 +668,7 @@ namespace AnkenMailer
         private void ShowDatabaseFileSizeMenuItem_Click(object sender, RoutedEventArgs e)
         {
             var file = new FileInfo(App.CurrentApp.DatabaseFilePath);
-            MessageBox.Show($"{file.Length / (1024.0 + 1024.0)} MB", "データベースのファイルサイズ", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"{file.Length / (1024.0 * 1024.0):F2} MB", "データベースのファイルサイズ", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void optimizeDatabaseFileSizeMenuItem_Click(object sender, RoutedEventArgs e)
@@ -702,10 +695,34 @@ namespace AnkenMailer
                 //■新しいサイズ
                 var mewSize = (new FileInfo(App.CurrentApp.DatabaseFilePath)).Length;
 
-                MessageBox.Show($"最適化が完了しました。({size / (1024.0 + 1024.0)} MB → ({mewSize / (1024.0 + 1024.0)} MB)", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"最適化が完了しました。({size / (1024.0 * 1024.0):F2} MB → ({mewSize / (1024.0 * 1024.0):F2} MB)", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
             }
           
 
+        }
+
+        private async  void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            await this.convertContentManager.Cnacel();
+        }
+
+        private void mailItemList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var mailItem = this.mailItemList.SelectedItem as MailItem;
+            if (mailItem != null)
+            {
+                if (mailItem.Message == null)
+                {
+                    mailItem.Message = MailMessage.Load(mailItem.Id);
+                    if (mailItem.Message == null)
+                    {
+                        using (var client = IMap.Open())
+                        {
+                            mailItem.Message = MailMessage.LoadFromImap(mailItem, client);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -753,7 +770,6 @@ namespace AnkenMailer
                         var folder = client.GetFolder(((MailFolder)value).FullName);
                         folder.Open(FolderAccess.ReadOnly);
                         var result = (from summary in folder.Fetch(0, -1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId) select new MailItem(folder.FullName, summary.UniqueId, summary.Envelope)).ToList();
-
 
                         this.mailItems = new ObservableCollection<MailItem>(result);
                     }
@@ -803,16 +819,13 @@ namespace AnkenMailer
     }
 
 
-    public class MailItemToBodyConverter : IValueConverter
+    public class ProgressToCancelButtonConverter : IValueConverter
     {
         public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var mailItem = value as MailItem;
-            if (mailItem == null || mailItem.Message == null)
-            {
-                return "";
-            }
-            return mailItem.Message.Body;
+            var v = value as int?;
+            return v == null || v >= 100 ? false : true;
+            
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -821,6 +834,4 @@ namespace AnkenMailer
         }
 
     }
-
-
 }

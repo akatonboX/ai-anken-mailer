@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Navigation;
 
 namespace AnkenMailer
 {
@@ -65,20 +66,7 @@ namespace AnkenMailer
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var b = value as bool?;
-            return  b == true || b == null ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public class NotNullableBoolToVlisiblityConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            var b = value as bool?;
-            return b != null && b == false ? Visibility.Visible : Visibility.Collapsed;
+            return b == null || b == false ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
