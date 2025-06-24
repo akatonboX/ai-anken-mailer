@@ -40,6 +40,7 @@ CREATE TABLE [AnkenHeader] (
     ON UPDATE CASCADE
 );
 
+
 DROP TABLE IF EXISTS [Anken];
 CREATE TABLE [Anken] (
   [EnvelopeId] INTEGER NOT NULL
@@ -63,20 +64,17 @@ CREATE TABLE [Anken] (
     ON UPDATE CASCADE
 );
 
-
-DROP TABLE IF EXISTS [TotalizationTarget];
-CREATE TABLE [TotalizationTarget] (
-  [EnvelopeId] INTEGER NOT NULL
-, CONSTRAINT [TotalizationTarget] PRIMARY KEY ([EnvelopeId])
-, FOREIGN KEY ([EnvelopeId])
-    REFERENCES [Envelope]([EnvelopeId])
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+DROP TABLE IF EXISTS [Skill];
+CREATE TABLE [Skill] (
+    [EnvelopeId] INTEGER NOT NULL
+    , [Index]  INTEGER NOT NULL
+    , [SkillName] TEXT NULL
+    , CONSTRAINT [PK_Skill] PRIMARY KEY ([EnvelopeId], [Index], [SkillName])
+    , FOREIGN KEY ([EnvelopeId], [Index])
+        REFERENCES [Anken]([EnvelopeId], [Index])
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
+CREATE INDEX index_skill_01 ON Skill([SkillName]);
 
-DROP TABLE IF EXISTS [MainSkill];
-CREATE TABLE [MainSkill] (
-    [SkillName] TEXT NULL PRIMARY KEY
-);
-CREATE INDEX index_skill_01 ON MainSkill([SkillName]);
 

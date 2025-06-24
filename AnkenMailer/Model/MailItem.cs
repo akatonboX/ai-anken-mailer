@@ -185,6 +185,8 @@ namespace AnkenMailer.Model
         public int? AnkenCount => Ankens?.Count;
         public string? AnkenName => TopAnken?.Name;
         public string? MainSkill => TopAnken?.MainSkill;
+        public string? Skills => TopAnken == null ? null : string.Join(",", TopAnken.Skills);
+
         public string? StartYearMonth => TopAnken?.StartYearMonth;
         public string? Place => TopAnken?.Place;
         public int? MaxUnitPrice => TopAnken?.MaxUnitPrice;
@@ -204,6 +206,7 @@ namespace AnkenMailer.Model
             OnPropertyChanged(nameof(AnkenCount));
             OnPropertyChanged(nameof(AnkenName));
             OnPropertyChanged(nameof(MainSkill));
+            OnPropertyChanged(nameof(Skills));
             OnPropertyChanged(nameof(StartYearMonth));
             OnPropertyChanged(nameof(Place));
             OnPropertyChanged(nameof(MaxUnitPrice));

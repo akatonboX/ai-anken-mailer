@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -25,6 +26,8 @@ namespace AnkenMailer.Model
         private int? maxUnitPrice;
         private int? minUnitPrice;
         private string? remarks;
+        private IList<string> skills = new List<string>();
+
         public int? Index
         {
             get => index;
@@ -93,7 +96,11 @@ namespace AnkenMailer.Model
             get => remarks;
             set => SetProperty(ref remarks, value);
         }
-
+        public IList<string> Skills
+        {
+            get => skills;
+            set => SetProperty(ref skills, value);
+        }
 
         public static IList<Anken> Load(long id)
         {
@@ -124,6 +131,30 @@ namespace AnkenMailer.Model
                     }
                 }
             }
+            using (var command = App.CurrentApp.Connection.CreateCommand())
+            {
+                command.CommandText = "select * from [Skill] where [EnvelopeId]=@EnvelopeId and [Index]=@Index";
+                command.Parameters.AddWithValue("@EnvelopeId", id);
+                command.Parameters.Add("@Index", SqliteType.Integer);
+
+                foreach(var anken in list)
+                {
+                    command.Parameters["@Index"].Value = anken.index;
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var skills = new List<string>();
+                        while (reader.Read())
+                        {
+                            skills.Add(reader.GetString("SkillName"));
+
+                        }
+                        anken.Skills = skills;
+                    }
+
+                }
+                
+            }
+
             return list;
         }
 

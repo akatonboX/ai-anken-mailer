@@ -156,11 +156,12 @@ namespace AnkenMailer
                                                         startYearMonth: string; //案件の開始時期。内容を解釈し、YYYY-MM形式で出力してください。
                                                         place: string;//作業場所
                                                         details: string;//作業内容。複数存在する場合は、連結してひとつの文字列にしてください。
-                                                        mainSkill: string;//主な開発言語として、"JAVA","C#", "Swift", "Pytion", "Ruby","GO", "その他"のどれかを選択してください。
+                                                        mainSkill: string;//主な開発言語として、"JAVA","C#", "Swift", "Python", "Ruby","Go", "その他"のどれかを選択してください。
+                                                        skills: string[];//その案件で用いるプログラム言語の名前を列挙して下さい。mainSkillとは無関係に考えてください。記載がない場合は空の配列です。"その他"など、プログラム言語の名前以外のものは含みません。
                                                         requiredSkills: string[];//必須の技術スタックの一覧。desirableSkillsと区別がつかない場合は、requiredSkillsに格納してください。
                                                         desirableSkills: string[];//あると有利な技術スタックの一覧。
-                                                        maxUnitPrice: number;//単価の最大。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。
-                                                        minUnitPrice: number;//単価の最小。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。
+                                                        maxUnitPrice: number;//単価の最大。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。さらに小数部は四捨五入で丸めてください。
+                                                        minUnitPrice: number;//単価の最小。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。さらに小数部は四捨五入で丸めてください。
                                                         remarks: string;//備考
                                                     }
                                                 ]
@@ -231,56 +232,83 @@ namespace AnkenMailer
                                     {
                                         var anken = newAnkens[i];
                                         anken.Index = i;
-                                        using var command = App.CurrentApp.Connection.CreateCommand();
-                                        command.CommandText = """
-                                        INSERT INTO [Anken]
-                                                ([EnvelopeId]
-                                                ,[Index]
-                                                ,[Name]
-                                                ,[Start]
-                                                ,[End]
-                                                ,[StartYearMonth]
-                                                ,[Place]
-                                                ,[Details]
-                                                ,[MainSkill]
-                                                ,[RequiredSkills]
-                                                ,[DesirableSkills]
-                                                ,[MaxUnitPrice]
-                                                ,[MinUnitPrice]
-                                                ,[Remarks])
-                                        VALUES (
-                                                @EnvelopeId
-                                                ,@Index
-                                                ,@Name
-                                                ,@Start
-                                                ,@End
-                                                ,@StartYearMonth
-                                                ,@Place
-                                                ,@Details
-                                                ,@MainSkill
-                                                ,@RequiredSkills
-                                                ,@DesirableSkills
-                                                ,@MaxUnitPrice
-                                                ,@MinUnitPrice
-                                                ,@Remarks);
-                                        """;
 
-                                        command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
-                                        command.Parameters.AddWithValue("@Index", anken.Index);
-                                        command.Parameters.AddWithValue("@Name", anken.Name != null ? anken.Name : DBNull.Value);
-                                        command.Parameters.AddWithValue("@Start", anken.Start != null ? anken.Start : DBNull.Value);
-                                        command.Parameters.AddWithValue("@End", anken.End != null ? anken.End : DBNull.Value);
-                                        command.Parameters.AddWithValue("@StartYearMonth", anken.StartYearMonth != null ? anken.StartYearMonth : DBNull.Value);
-                                        command.Parameters.AddWithValue("@Place", anken.Place != null ? anken.Place : DBNull.Value);
-                                        command.Parameters.AddWithValue("@Details", anken.Details != null ? anken.Details : DBNull.Value);
-                                        command.Parameters.AddWithValue("@MainSkill", anken.MainSkill != null ? anken.MainSkill : DBNull.Value);
-                                        command.Parameters.AddWithValue("@RequiredSkills", anken.RequiredSkills != null ? string.Join(",", anken.RequiredSkills) : DBNull.Value);
-                                        command.Parameters.AddWithValue("@DesirableSkills", anken.DesirableSkills != null ? string.Join(",", anken.DesirableSkills) : DBNull.Value);
-                                        command.Parameters.AddWithValue("@MaxUnitPrice", anken.MaxUnitPrice != null ? anken.MaxUnitPrice : DBNull.Value);
-                                        command.Parameters.AddWithValue("@MinUnitPrice", anken.MinUnitPrice != null ? anken.MinUnitPrice : DBNull.Value);
-                                        command.Parameters.AddWithValue("@Remarks", anken.Remarks != null ? anken.Remarks : DBNull.Value);
-                                        command.ExecuteNonQuery();
-                                    }
+                                        using (var command = App.CurrentApp.Connection.CreateCommand())
+                                        {
+                                            command.CommandText = """
+                                                INSERT INTO [Anken]
+                                                        ([EnvelopeId]
+                                                        ,[Index]
+                                                        ,[Name]
+                                                        ,[Start]
+                                                        ,[End]
+                                                        ,[StartYearMonth]
+                                                        ,[Place]
+                                                        ,[Details]
+                                                        ,[MainSkill]
+                                                        ,[RequiredSkills]
+                                                        ,[DesirableSkills]
+                                                        ,[MaxUnitPrice]
+                                                        ,[MinUnitPrice]
+                                                        ,[Remarks])
+                                                VALUES (
+                                                        @EnvelopeId
+                                                        ,@Index
+                                                        ,@Name
+                                                        ,@Start
+                                                        ,@End
+                                                        ,@StartYearMonth
+                                                        ,@Place
+                                                        ,@Details
+                                                        ,@MainSkill
+                                                        ,@RequiredSkills
+                                                        ,@DesirableSkills
+                                                        ,@MaxUnitPrice
+                                                        ,@MinUnitPrice
+                                                        ,@Remarks);
+                                                """;
+
+                                            command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
+                                            command.Parameters.AddWithValue("@Index", anken.Index);
+                                            command.Parameters.AddWithValue("@Name", anken.Name != null ? anken.Name : DBNull.Value);
+                                            command.Parameters.AddWithValue("@Start", anken.Start != null ? anken.Start : DBNull.Value);
+                                            command.Parameters.AddWithValue("@End", anken.End != null ? anken.End : DBNull.Value);
+                                            command.Parameters.AddWithValue("@StartYearMonth", anken.StartYearMonth != null ? anken.StartYearMonth : DBNull.Value);
+                                            command.Parameters.AddWithValue("@Place", anken.Place != null ? anken.Place : DBNull.Value);
+                                            command.Parameters.AddWithValue("@Details", anken.Details != null ? anken.Details : DBNull.Value);
+                                            command.Parameters.AddWithValue("@MainSkill", anken.MainSkill != null ? anken.MainSkill : DBNull.Value);
+                                            command.Parameters.AddWithValue("@RequiredSkills", anken.RequiredSkills != null ? string.Join(",", anken.RequiredSkills) : DBNull.Value);
+                                            command.Parameters.AddWithValue("@DesirableSkills", anken.DesirableSkills != null ? string.Join(",", anken.DesirableSkills) : DBNull.Value);
+                                            command.Parameters.AddWithValue("@MaxUnitPrice", anken.MaxUnitPrice != null ? anken.MaxUnitPrice : DBNull.Value);
+                                            command.Parameters.AddWithValue("@MinUnitPrice", anken.MinUnitPrice != null ? anken.MinUnitPrice : DBNull.Value);
+                                            command.Parameters.AddWithValue("@Remarks", anken.Remarks != null ? anken.Remarks : DBNull.Value);
+                                            command.ExecuteNonQuery();
+                                        }
+
+                                        //■Skill
+                                        using (var command = App.CurrentApp.Connection.CreateCommand())
+                                        {
+                                            command.CommandText = """
+                                                INSERT INTO [Skill]
+                                                        ([EnvelopeId]
+                                                        ,[Index]
+                                                        ,[SkillName])
+                                                VALUES (
+                                                        @EnvelopeId
+                                                        ,@Index
+                                                        ,@SkillName);
+                                                """;
+
+                                            command.Parameters.AddWithValue("@EnvelopeId", mailItem.Id);
+                                            command.Parameters.AddWithValue("@Index", anken.Index);
+                                            var skillNameParameter = command.Parameters.Add("@SkillName", SqliteType.Text);
+                                            foreach(var skillName in anken.Skills)
+                                            {
+                                                skillNameParameter.Value = skillName;
+                                                command.ExecuteNonQuery();
+                                            }
+                                        }
+                                    }                                  
                                 }
 
                                 //■メールアイテムに格納

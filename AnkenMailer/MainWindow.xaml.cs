@@ -8,6 +8,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Win32;
 using MimeKit;
 using MimeKit.Utils;
+using OpenAI.Chat;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Bcpg.OpenPgp;
 using Org.BouncyCastle.Tls;
@@ -622,64 +623,7 @@ namespace AnkenMailer
 
 
 
-        private void Totalization01MenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            var client = IMap.Open();
-            var dialog = new MultiSelectFolderWindow(client);
-            
-            dialog.Owner = this;
-            if(dialog.ShowDialog() == true)
-            {
-                var folders = dialog.Folders;
-                var result = new DataTable();
-                using (var tempTable = new TotalizationTargetTempTable(App.CurrentApp.Connection, folders))
-                {
-                    using var command = App.CurrentApp.Connection.CreateCommand();
-                    command.CommandText = $"""
-                        select
-                            MainSkill
-                            , Price
-                            , Folder
-                            , COUNT(*) as Cnt
-                        from (
-                            select 
-                                Temp.Folder
-                                , Anken.MainSkill
-                                , CASE
-                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) < 70 THEN NULL
-                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) BETWEEN 70 AND 74 THEN 70
-                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) BETWEEN 75 AND 79 THEN 75
-                                    ELSE 80
-                                END AS Price
-                            from Anken
-                            inner join Envelope
-                            on Anken.EnvelopeId = Envelope.EnvelopeId
-                            inner join memdb.[{tempTable.TempTableName}] Temp
-                            on Anken.EnvelopeId = Temp.EnvelopeId        
-                        ) Target
-                        where
-                            Price is not null
-                        group by 
-                            MainSkill
-                            , Price
-                            , Folder                           
-                        order by
-                            MainSkill
-                            , Price
-                            , Folder
-
-                        """;
-                    
-                    using (var reader = command.ExecuteReader())
-                    {
-                        result.Load(reader);
-                    }
-                }
-                var window = new TotalizationResultWindow(result);
-                window.ShowDialog();
-
-            }
-        }
+        
         private class Totalization01Data
         {
             public string MainSkill { get; set; }
@@ -750,7 +694,7 @@ namespace AnkenMailer
           
 
         }
-
+       
         private async  void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             await this.convertContentManager.Cnacel();
@@ -774,8 +718,114 @@ namespace AnkenMailer
                 }
             }
         }
+        private void Totalization01MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var client = IMap.Open();
+            var dialog = new MultiSelectFolderWindow(client);
 
+            dialog.Owner = this;
+            if (dialog.ShowDialog() == true)
+            {
+                var folders = dialog.Folders;
+                var result = new DataTable();
+                using (var tempTable = new TotalizationTargetTempTable(App.CurrentApp.Connection, folders))
+                {
+                    using var command = App.CurrentApp.Connection.CreateCommand();
+                    command.CommandText = $"""
+                        select
+                            MainSkill
+                            , Price
+                            , Folder
+                            , COUNT(*) as Cnt
+                        from (
+                            select 
+                                Temp.Folder
+                                , Anken.MainSkill
+                                , CASE
+                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) < 70 THEN NULL
+                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) BETWEEN 70 AND 74 THEN 70
+                                    WHEN IFNULL(IFNULL(Anken.MaxUnitPrice, Anken.MinUnitPrice), 0) BETWEEN 75 AND 79 THEN 75
+                                    ELSE 80
+                                END AS Price
+                            from Anken
+                            inner join Envelope
+                            on Anken.EnvelopeId = Envelope.EnvelopeId
+                            inner join memdb.[{tempTable.TempTableName}] Temp
+                            on Anken.EnvelopeId = Temp.EnvelopeId        
+                        ) Target
+                        where
+                            Price is not null
+                        group by 
+                            MainSkill
+                            , Price
+                            , Folder                           
+                        order by
+                            MainSkill
+                            , Price
+                            , Folder
 
+                        """;
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        result.Load(reader);
+                    }
+                }
+                var window = new TotalizationResultWindow(result);
+                window.ShowDialog();
+
+            }
+        }
+        private void Totalization02MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var result = new DataTable();
+            result.Columns.Add(new Func<DataColumn>(() =>
+            {
+                var column = new DataColumn("SkillName", typeof(string));
+                column.AllowDBNull = true;
+                column.Caption = "プログラム言語";
+                return column;
+            })());
+            result.Columns.Add(new Func<DataColumn>(() =>
+            {
+                var column = new DataColumn("cnt", typeof(int));
+                column.AllowDBNull = true;
+                column.Caption = "件数";
+                return column;
+            })());
+            result.BeginLoadData();
+            using var command = App.CurrentApp.Connection.CreateCommand();
+            command.CommandText = $"""
+                    select
+                        SkillName
+                        , count(*) as cnt
+                    from Skill
+                    where SkillName is not null
+                    group by SkillName
+                    order by SkillName
+                 """;
+            //command.CommandText = $"""
+            //        select
+            //            distinct
+            //            SkillName
+            //        from Skill
+            //        where SkillName is not null
+            //     """;
+            using (var reader = command.ExecuteReader())
+            {
+                //result.Load(reader);
+                while (reader.Read())
+                {
+                    var row = result.NewRow();
+                    row["SkillName"] = reader.GetString("SkillName");
+                    row["cnt"] = reader.GetInt32("cnt");
+                    result.Rows.Add(row);
+                }
+            }
+            result.EndLoadData();
+            var window = new TotalizationResultWindow(result);
+            window.ShowDialog();
+        }
     }
 
     public class MainWindowViewModel : ObservableObject

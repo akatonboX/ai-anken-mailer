@@ -28,6 +28,7 @@
             </MenuItem>
             <MenuItem Header="集計">
                 <MenuItem Header="フォルダ/メインスキル/単価毎に件数を集計" Click="Totalization01MenuItem_Click"/>
+                <MenuItem Header="プログラム言語毎に件数を集計" Click="Totalization02MenuItem_Click"/>
             </MenuItem>
         </Menu>
         <StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
@@ -116,11 +117,13 @@
                             <DataGridTextColumn Header="解析の状況" Binding="{Binding AnalysisState}" IsReadOnly="True" Width="60"  SortMemberPath="AnalysisState" />
                             <DataGridTextColumn Header="案件名" Binding="{Binding AnkenName}" IsReadOnly="True" SortMemberPath="AnkenName"  />
                             <DataGridTextColumn Header="メインスキル" Binding="{Binding MainSkill}" IsReadOnly="True" SortMemberPath="MainSkill"  />
+                            <DataGridTextColumn Header="プログラム言語" Binding="{Binding Skills}"  IsReadOnly="True" Width="100" SortMemberPath="RequiredSkills" />
                             <DataGridTextColumn Header="開始月" Binding="{Binding StartYearMonth}" IsReadOnly="True" SortMemberPath="StartYearMonth"  />
                             <DataGridTextColumn Header="場所" Binding="{Binding Place}" IsReadOnly="True" SortMemberPath="Place"  />
                             <DataGridTextColumn Header="単価(max)" Binding="{Binding MaxUnitPrice}" IsReadOnly="True" SortMemberPath="MaxUnitPrice"  />
                             <DataGridTextColumn Header="単価(min)" Binding="{Binding MinUnitPrice}" IsReadOnly="True" SortMemberPath="MinUnitPrice"  />
                             <DataGridTextColumn Header="備考" Binding="{Binding Remarks}" IsReadOnly="True" SortMemberPath="Remarks"  />
+ 
                             <DataGridTextColumn Header="作業内容の詳細" Binding="{Binding Details}" IsReadOnly="True" SortMemberPath="Details"  />
                             <DataGridTextColumn Header="必須スキル" Binding="{Binding RequiredSkills}"  IsReadOnly="True" Width="300" SortMemberPath="RequiredSkills" />
                             <DataGridTextColumn Header="尚可スキル" Binding="{Binding DesirableSkills}"  IsReadOnly="True" Width="300" SortMemberPath="DesirableSkills" />
