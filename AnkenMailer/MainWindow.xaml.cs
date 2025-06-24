@@ -364,9 +364,10 @@ namespace AnkenMailer
                 using (var client = IMap.Open())
                 {
 
-                    var destFolder = client.GetFolder("INBOX.Trash");
                     var srcFolder = client.GetFolder(mailItem.FolderPath);
                     srcFolder.Open(FolderAccess.ReadWrite);
+                    var destFolder = IMap.GetTrash(srcFolder);
+                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
                     srcFolder.MoveTo(mailItem.UId, destFolder);
                     this.ViewModel.MailItems.Remove(mailItem);
                 }
@@ -421,10 +422,11 @@ namespace AnkenMailer
                 using (var client = IMap.Open())
                 {
                     //■IMAPの準備
-                    var destFolder = client.GetFolder("INBOX.Trash");
+                   
                     var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
                     srcFolder.Open(FolderAccess.ReadWrite);
-
+                    var destFolder = IMap.GetTrash(srcFolder);
+                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
 
                     var duplicatedMailItems = targets
                         .GroupBy(item => item.Subject)
@@ -461,9 +463,10 @@ namespace AnkenMailer
             {
                 using (var client = IMap.Open())
                 {
-                    var destFolder = client.GetFolder("INBOX.Trash");
                     var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
                     srcFolder.Open(FolderAccess.ReadWrite);
+                    var destFolder = IMap.GetTrash(srcFolder);
+                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
                     foreach (var target in targets)
                     {
                         srcFolder.MoveTo(target.UId, destFolder);
@@ -804,13 +807,6 @@ namespace AnkenMailer
                     group by SkillName
                     order by SkillName
                  """;
-            //command.CommandText = $"""
-            //        select
-            //            distinct
-            //            SkillName
-            //        from Skill
-            //        where SkillName is not null
-            //     """;
             using (var reader = command.ExecuteReader())
             {
                 //result.Load(reader);
@@ -825,6 +821,11 @@ namespace AnkenMailer
             result.EndLoadData();
             var window = new TotalizationResultWindow(result);
             window.ShowDialog();
+        }
+
+        private void ReloadFolderMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.LoadMailFolders();
         }
     }
 

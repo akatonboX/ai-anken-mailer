@@ -14,6 +14,7 @@ namespace AnkenMailer.Model
         private string fullName;
         private string name;
         private bool isExpanded = true;
+        private ObservableCollection<MailFolder> chldren;
         public MailFolder(IMailFolder folder)
         {
             fullName = folder.FullName;
@@ -39,7 +40,17 @@ namespace AnkenMailer.Model
             set => SetProperty(ref isExpanded, value);
         }
 
-        public ObservableCollection<MailFolder> Children { get; }
+        public ObservableCollection<MailFolder> Children
+        {
+            get => chldren;
+            set => SetProperty(ref chldren, value);
+        }
 
+        public void Refresh(IMailFolder folder)
+        {
+            this.fullName = folder.FullName;
+            this.Name = folder.Name;
+            this.Children = new ObservableCollection<MailFolder>(from item in folder.GetSubfolders(false) select new MailFolder(item));
+        }
     }
 }

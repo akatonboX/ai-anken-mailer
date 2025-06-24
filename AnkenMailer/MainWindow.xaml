@@ -20,6 +20,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="設定">
+                <MenuItem Header="フォルダのリロード" Click="ReloadFolderMenuItem_Click"/>
                 <MenuItem Header="標準設定" Click="GeneralSettingsMenuItem_Click"/>
                 <MenuItem Header="データベースのエクスポート" Click="ExportDatabaseMenuItem_Click"/>
                 <MenuItem Header="データベースのインポート" Click="ImportDatabaseMenuItem_Click"/>
@@ -86,7 +87,7 @@
                             <Button.ContextMenu>
                                 <ContextMenu x:Name="MyContextMenu">
                                     <MenuItem Header="件名の重複したメールを削除" Click="DeleteDuplicatedMailButton_Click"/>
-                                    <MenuItem Header="削除" Click="DeleteMailListButton_Click"/>
+                                    <MenuItem Header="すべて削除" Click="DeleteMailListButton_Click"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
