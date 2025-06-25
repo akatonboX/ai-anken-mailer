@@ -78,3 +78,10 @@ CREATE TABLE [Skill] (
 CREATE INDEX index_skill_01 ON Skill([SkillName]);
 
 
+DROP TABLE IF EXISTS [LlmUsage];
+CREATE TABLE [LlmUsage] (
+    [LlmUsageId] INTEGER PRIMARY KEY
+    , [Date]  TEXT NOT NULL
+    , [InputTokenCount] INTEGER NOT NULL
+    , [OutputTokenCount] INTEGER NOT NULL
+);

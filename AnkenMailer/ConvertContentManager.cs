@@ -178,7 +178,29 @@ namespace AnkenMailer
 
                                         var response = chatClient.CompleteChat(messages);
 
-                                        //JSONの形式チェック
+                                        //■LLM使用料の記録
+                                        {
+                                            using var command = App.CurrentApp.Connection.CreateCommand();
+                                            command.CommandText = """
+                                                INSERT INTO [LlmUsage](
+                                                    [Date]
+                                                    ,[InputTokenCount]
+                                                    ,[OutputTokenCount]
+                                                )
+                                                VALUES (
+                                                    @Date
+                                                    , @InputTokenCount
+                                                    , @OutputTokenCount
+                                                );
+                                                """;
+                                            command.Parameters.AddWithValue("@Date", DateTimeOffset.Now.ToString("o"));
+                                            command.Parameters.AddWithValue("@InputTokenCount", response.Value.Usage.InputTokenCount);
+                                            command.Parameters.AddWithValue("@OutputTokenCount", response.Value.Usage.OutputTokenCount);
+                                            command.ExecuteNonQuery();
+                                            
+                                        }
+                                       
+                                        //■JSONの形式チェック
                                         var json = response.Value.Content[0].Text;
                                         try
                                         {

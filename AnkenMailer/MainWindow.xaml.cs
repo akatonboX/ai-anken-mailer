@@ -827,6 +827,13 @@ namespace AnkenMailer
         {
             this.LoadMailFolders();
         }
+
+        private void LlmUsageMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new LlmUsageWindow();
+            window.Owner = this;
+            window.ShowDialog();
+        }
     }
 
     public class MainWindowViewModel : ObservableObject
