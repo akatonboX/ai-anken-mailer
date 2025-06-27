@@ -20,9 +20,10 @@
     </Window.Title>
 
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top">
+        <DockPanel DockPanel.Dock="Top" Margin="5">
+            <CheckBox DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding IgnoreCase}">大文字小文字をしない</CheckBox>
             <TextBox Margin="5" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-        </StackPanel>
+        </DockPanel>
         <UniformGrid DockPanel.Dock="Bottom"  Columns="2" Rows="1" Margin="10">
             <Button x:Name="acceptButton" Click="acceptButton_Click" Width="100" >OK</Button>
             <Button x:Name="cancelButton" Click="cancelButton_Click"  Width="100">キャンセル</Button>

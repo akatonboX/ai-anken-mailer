@@ -88,6 +88,7 @@
                             <Button.ContextMenu>
                                 <ContextMenu x:Name="MyContextMenu">
                                     <MenuItem Header="件名の重複したメールを削除" Click="DeleteDuplicatedMailButton_Click"/>
+                                    <MenuItem Header="件名に不要なスキルがあるメールを削除" Click="DeleteUnnecessarySkillButton_Click"/>
                                     <MenuItem Header="すべて削除" Click="DeleteMailListButton_Click"/>
                                 </ContextMenu>
                             </Button.ContextMenu>

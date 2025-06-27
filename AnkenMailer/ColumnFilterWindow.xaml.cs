@@ -50,7 +50,7 @@ namespace AnkenMailer
             this.ViewModel = new ColumnFilterWindowViewModel(list, headerLabel);
             this.ViewModel.PropertyChanged += (object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
             {
-                if(e.PropertyName == nameof(ColumnFilterWindowViewModel.SearchText))
+                if(e.PropertyName == nameof(ColumnFilterWindowViewModel.SearchText) || e.PropertyName == nameof(ColumnFilterWindowViewModel.IgnoreCase))
                 {
                     //■フィルタの適用
                     var viewSource = (CollectionViewSource)this.Resources["ItemsCollectionViewSource"];
@@ -92,7 +92,7 @@ namespace AnkenMailer
             private IList<Item> items;
             private string searchText = "";
             private string columnName = "";
-
+            private bool ignoreCase = true;
             public ColumnFilterWindowViewModel(IList<Item> items, string columnName)
             {
                 this.items = items;
@@ -116,7 +116,11 @@ namespace AnkenMailer
                 get => this.columnName;
                 set => this.SetProperty(ref this.columnName, value);
             }
-
+            public bool IgnoreCase
+            {
+                get => this.ignoreCase;
+                set => this.SetProperty(ref this.ignoreCase, value);
+            }
 
         }
         public class Item : ObservableObject
@@ -202,7 +206,7 @@ namespace AnkenMailer
             
             if (item != null)
             {
-                e.Accepted = item.IsAll || (item.Value == null && this.ViewModel.SearchText.Trim().Length == 0) || (item.Value != null && item.Value.ToString().IndexOf(this.ViewModel.SearchText.Trim()) >= 0);
+                e.Accepted = item.IsAll || (item.Value == null && this.ViewModel.SearchText.Trim().Length == 0) || (item.Value != null && item.Value.ToString().IndexOf(this.ViewModel.SearchText.Trim(), this.ViewModel.IgnoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture) >= 0);
             }
         }
 

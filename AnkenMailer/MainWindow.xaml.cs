@@ -450,6 +450,44 @@ namespace AnkenMailer
             }
         }
 
+        private void DeleteUnnecessarySkillButton_Click(object sender, RoutedEventArgs e)
+        {
+            var targets = this.mailItemList.Items.Cast<MailItem>().ToList();
+            if (targets.Count == 0)
+            {
+                MessageBox.Show("対象がありません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var window = new RemoveBySubjectWindow();
+            window.Owner = this;
+            if(window.ShowDialog() == true)
+            {
+                using (var client = IMap.Open())
+                {
+                    var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
+                    srcFolder.Open(FolderAccess.ReadWrite);
+                    var destFolder = IMap.GetTrash(srcFolder);
+                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
+
+                    var necessaries = window.ViewModel.Data.Where(x => x.IsNecessary).Select(x => x.SkillName).ToList();
+                    var unNecessaries = window.ViewModel.Data.Where(x => !x.IsNecessary).Select(x => x.SkillName).ToList();
+                    foreach (var target in targets)
+                    {
+                        var subject = target.Subject;
+                        var a = unNecessaries.FindAll(x => subject.Contains(x));
+                        var b = necessaries.FindAll(x => subject.Contains(x));
+                        if (subject != null && unNecessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0) && necessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0))
+                        {
+                            srcFolder.MoveTo(target.UId, destFolder);
+                            this.ViewModel.MailItems.Remove(target);
+                        }
+                    }
+
+
+                }
+            }
+        }
         private void DeleteMailListButton_Click(object sender, RoutedEventArgs e)
         {
             var targets = this.mailItemList.Items.Cast<MailItem>().ToList();
@@ -834,6 +872,7 @@ namespace AnkenMailer
             window.Owner = this;
             window.ShowDialog();
         }
+
     }
 
     public class MainWindowViewModel : ObservableObject
