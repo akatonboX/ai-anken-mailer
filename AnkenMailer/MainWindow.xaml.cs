@@ -20,6 +20,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Packaging;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
@@ -873,6 +874,16 @@ namespace AnkenMailer
             window.ShowDialog();
         }
 
+        private void VersionMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var appVersion = new Func<string>(() =>
+            {
+                var v = Windows.ApplicationModel.Package.Current.Id.Version;
+                return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+            })();
+            MessageBox.Show(appVersion, "バージョン情報", MessageBoxButton.OK);
+            
+        }
     }
 
     public class MainWindowViewModel : ObservableObject
