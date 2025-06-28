@@ -156,8 +156,8 @@ namespace AnkenMailer
                                                         startYearMonth: string; //案件の開始時期。内容を解釈し、YYYY-MM形式で出力してください。
                                                         place: string;//作業場所
                                                         details: string;//作業内容。複数存在する場合は、連結してひとつの文字列にしてください。
-                                                        mainSkill: string;//主な開発言語として、"JAVA","C#", "Swift", "Python", "Ruby","Go", "その他"のどれかを選択してください。
                                                         skills: string[];//その案件で用いるプログラム言語の名前を列挙して下さい。mainSkillとは無関係に考えてください。記載がない場合は空の配列です。"その他"など、プログラム言語の名前以外のものは含みません。
+                                                        mainSkill: string;//主な開発言語として、"JAVA","C#", "Swift", "Python", "Ruby","Go"のどれかを選択してください。どれにも当たらない場合は、"その他"にして下さい。特に、「skills」に、"JAVA","C#", "Swift", "Python", "Ruby","Go"のいずれかが含まれているにもかかわらず、"その他"になるようなことにはしないでください。
                                                         requiredSkills: string[];//必須の技術スタックの一覧。desirableSkillsと区別がつかない場合は、requiredSkillsに格納してください。
                                                         desirableSkills: string[];//あると有利な技術スタックの一覧。
                                                         maxUnitPrice: number;//単価の最大。「万円」の単位にして下さい。30万円を下回ることはないですし、200万円を上回ることはないので、推測してください。ただし、記載がなければ、nullにして下さい。さらに小数部は四捨五入で丸めてください。
