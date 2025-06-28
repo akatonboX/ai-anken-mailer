@@ -70,7 +70,20 @@ namespace AnkenMailer
             this.Close();
         }
 
-       
+        private void copyButton_Click(object sender, RoutedEventArgs e)
+        {
+            var text = $"""
+                ImapServer: {this.ViewModel.ImapServer}
+                ImapPort: {this.ViewModel.ImapPort}
+                ImapUser: {this.ViewModel.ImapUser}
+                ImapPassword: {this.ViewModel.ImapPassword}
+                Endpoint: {this.ViewModel.Endpoint}
+                DeploymentName: {this.ViewModel.DeploymentName}
+                ApiKey: {this.ViewModel.ApiKey}
+                WebMailPath: {this.ViewModel.WebMailPath}
+                """;
+            Clipboard.SetText(text);
+        }
     }
     public class SettinsgWindowViewModel : ObservableObject
     {

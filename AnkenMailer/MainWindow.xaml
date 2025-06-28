@@ -27,7 +27,7 @@
                 <MenuItem Header="データベースファイルのサイズを確認" Click="ShowDatabaseFileSizeMenuItem_Click"/>
                 <MenuItem Header="データベースファイルの最適化" Click="optimizeDatabaseFileSizeMenuItem_Click"/>
                 <MenuItem Header="LLM使用状況" Click="LlmUsageMenuItem_Click"/>
-                <MenuItem Header="バージョン" Click="VersionMenuItem_Click"/>
+                <MenuItem Header="アプリケーションの情報" Click="VersionMenuItem_Click"/>
             </MenuItem>
             <MenuItem Header="集計">
                 <MenuItem Header="フォルダ/メインスキル/単価毎に件数を集計" Click="Totalization01MenuItem_Click"/>

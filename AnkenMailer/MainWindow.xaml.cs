@@ -881,7 +881,15 @@ namespace AnkenMailer
                 var v = Windows.ApplicationModel.Package.Current.Id.Version;
                 return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
             })();
-            MessageBox.Show(appVersion, "バージョン情報", MessageBoxButton.OK);
+            var message = $"""
+                バージョン: {appVersion}
+                データのファイルパス: {App.CurrentApp.DatabaseFilePath}
+                """;
+            Clipboard.SetText(message);
+            MessageBox.Show($"""
+                {message}
+                ※この情報は、クリップボードにもコピーされました。
+                """, "アプリケーションの情報", MessageBoxButton.OK);
             
         }
     }

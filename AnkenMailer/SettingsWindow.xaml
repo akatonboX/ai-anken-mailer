@@ -13,9 +13,10 @@
     </Window.Resources>
     <DockPanel>
 
-        <UniformGrid DockPanel.Dock="Bottom"  Columns="2" Rows="1" Margin="10">
-            <Button x:Name="acceptButton" Click="acceptButton_Click" Width="100" >OK</Button>
-            <Button x:Name="cancelButton" Click="cancelButton_Click"  Width="100">キャンセル</Button>
+        <UniformGrid DockPanel.Dock="Bottom"  Columns="3" Rows="1" Margin="10">
+            <Button x:Name="acceptButton" Click="acceptButton_Click" Width="80">OK</Button>
+            <Button x:Name="cancelButton" Click="cancelButton_Click"  Width="80">キャンセル</Button>
+            <Button x:Name="copyButton" Click="copyButton_Click"  Width="80">コピー</Button>
         </UniformGrid>
         <Grid Margin="10">
             <Grid.Resources>

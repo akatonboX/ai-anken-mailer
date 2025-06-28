@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Data;
 using System.IO;
 using System.Windows;
+using Windows.Storage;
 
 namespace AnkenMailer
 {
@@ -16,14 +17,7 @@ namespace AnkenMailer
 
         public string DatabaseFilePath
         {
-            get
-            {
-                return Path.Combine(
-                           Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                           "AnkenMailer",
-                           "data.db"
-                        );
-            }
+            get => Path.Combine(ApplicationData.Current.LocalFolder.Path, "data.db");
         }
 
         public static App CurrentApp
