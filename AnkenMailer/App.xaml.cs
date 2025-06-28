@@ -72,7 +72,19 @@ namespace AnkenMailer
             //■memdbにアタッチ
             using var command = this.Connection.CreateCommand();
             command.CommandText = "ATTACH DATABASE ':memory:' AS memdb;";
-            command.ExecuteNonQuery();
+            try
+            {
+                command.ExecuteNonQuery();
+            }
+            catch(SqliteException ex)
+            {
+                //※アタッチ済みで、「ATTACH DATABASE ':memory:' AS memdb;」が失敗した時以外は例外を上げなおす
+                if(ex.Message != "SQLite Error 1: 'database memdb is already in use'.")
+                {
+                    throw ex;
+                }
+            }
+
         }
     }
 
