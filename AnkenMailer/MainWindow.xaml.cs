@@ -40,6 +40,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
 using static AnkenMailer.ColumnFilterWindow;
+using static AnkenMailer.SelectSkillsWindow;
 using MailFolder = AnkenMailer.Model.MailFolder;
 
 namespace AnkenMailer
@@ -471,14 +472,41 @@ namespace AnkenMailer
                     var destFolder = IMap.GetTrash(srcFolder);
                     this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
 
-                    var necessaries = window.ViewModel.Data.Where(x => x.IsNecessary).Select(x => x.SkillName).ToList();
-                    var unNecessaries = window.ViewModel.Data.Where(x => !x.IsNecessary).Select(x => x.SkillName).ToList();
+                    var necessaries = window.ViewModel.SkillNames;
+                    var unNecessaries = new Func<List<string>>(() =>
+                    {
+                        var result = new List<string>();
+                        using (var command = App.CurrentApp.Connection.CreateCommand())
+                        {
+                            command.CommandText = """
+                                select 
+                                    distinct [SkillName] 
+                                from [Skill] 
+                                where 
+                                    length([SkillName]) > 1
+                                order by [SkillName];
+                            """;
+                            using (var reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    var skillName = reader.GetString(0);
+                                    if (!necessaries.Contains(skillName, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        result.Add(skillName);
+                                    }
+
+                                }
+                            }
+                        }
+                        return result;
+                    })();
                     foreach (var target in targets)
                     {
                         var subject = target.Subject;
-                        var a = unNecessaries.FindAll(x => subject.Contains(x));
-                        var b = necessaries.FindAll(x => subject.Contains(x));
-                        if (subject != null && unNecessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0) && necessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0))
+                        var a = unNecessaries.FindAll(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0);
+                        var b = necessaries.FindAll(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0);
+                        if (subject != null && unNecessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0) && !necessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0))
                         {
                             srcFolder.MoveTo(target.UId, destFolder);
                             this.ViewModel.MailItems.Remove(target);

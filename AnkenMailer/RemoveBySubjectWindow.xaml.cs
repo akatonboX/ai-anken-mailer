@@ -15,6 +15,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
@@ -41,22 +42,20 @@ namespace AnkenMailer
                 using (var command = App.CurrentApp.Connection.CreateCommand())
                 {
                     command.CommandText = """
-                    select 
-                        Skills.[SkillName]
-                        , COALESCE([SkillValidity].[IsNecessary] , 0) as [IsNecessary]
-                    from (
-                        select distinct [SkillName] from [Skill] where length([SkillName]) > 1
-                    ) Skills
-                    left join [SkillValidity]
-                    on Skills.SkillName = [SkillValidity].SkillName
-                    order by Skills.[SkillName];
-                """;
+                        select 
+                            [SkillName]
+                        from [NecessarySkill]
+                        order by [SkillName];
+                    """;
                     using (var reader = command.ExecuteReader())
                     {
+                        var stringBuilder = new StringBuilder();
                         while (reader.Read())
                         {
-                            viewModel.Data.Add(new SkillValidity(reader.GetString("SkillName"), reader.GetBoolean("IsNecessary")));
+                            stringBuilder.Append(reader.GetString("SkillName"));
+                            stringBuilder.Append("\r\n");
                         }
+                        viewModel.Text = stringBuilder.ToString();
                     }
                 }
             }
@@ -68,6 +67,17 @@ namespace AnkenMailer
         public MyViewModel ViewModel
         {
             get => (MyViewModel)this.DataContext;
+        }
+
+        private void ImportButton_Click(object sender, RoutedEventArgs e)
+        {
+            var skillNames = this.ViewModel.SkillNames;
+            var window = new SelectSkillsWindow(skillNames);
+            window.Owner = this;
+            if (window.ShowDialog() == true)
+            {
+                this.ViewModel.SkillNames = skillNames.Union(window.ViewModel.Data.Where(x => x.Selected).Select(x => x.SkillName).ToList()).ToList();
+            }
         }
 
         private void acceptButton_Click(object sender, RoutedEventArgs e)
@@ -83,205 +93,72 @@ namespace AnkenMailer
             this.Close();
         }
 
+
         private void saveButton_Click(object sender, RoutedEventArgs e)
         {
             this.Save();
             MessageBox.Show("保存しました。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-
-        private void CollectionViewSource_Filter(object sender, FilterEventArgs e)
-        {
-            var item = e.Item as SkillValidity;
-            if (item != null)
-            {
-                var clazz = item.GetType();
-
-
-
-                foreach (var filterItem in this.ViewModel.ColumnFilters.Items)
-                {
-                    if (filterItem.Value != null)
-                    {
-                        var value = clazz.GetProperty(filterItem.Key)?.GetValue(item);
-                        e.Accepted = filterItem.Value.Contains(value);
-
-                    }
-                    if (e.Accepted == false)
-                    {
-                        break;
-                    }
-                }
-            }
-
-        }
-        private void ColumnHeader_RightClick(object sender, MouseButtonEventArgs e)
-        {
-            //■編集中であればコミット
-            var viewSource = (CollectionViewSource)this.Resources["DataCollectionView"];
-            if (viewSource.View is IEditableCollectionView editableView)
-            {
-                // 必要に応じて Commit してから Refresh
-                if (editableView.IsEditingItem)
-                    editableView.CommitEdit(); // または CancelEdit()
-                if (editableView.IsAddingNew)
-                    editableView.CommitNew(); // または CancelNew()
-            }
-
-            //■データ収集
-            var columnHeader = (DataGridColumnHeader)sender;
-            var column = columnHeader.Column;
-            var headerName = column.SortMemberPath;
-
-            //■選択肢の生成
-            var items = this.ViewModel.Data == null ? new List<object?>()
-                        : this.ViewModel.Data
-                            .OfType<object>() // DataGridが内部で使うDataRowViewなどを避けるため
-                            .Select(item =>
-                            {
-                                try
-                                {
-                                    var prop = item.GetType().GetProperty(headerName);
-                                    return prop?.GetValue(item);
-                                }
-                                catch (Exception ex)
-                                {
-                                    return null;
-                                }
-                            })
-                            .OrderBy(v => v)
-                            .Distinct()
-                            .ToList();
-
-            //■Windowの準備と表示
-            var window = new ColumnFilterWindow(column.Header.ToString().Replace("*", ""), items, this.ViewModel.ColumnFilters[headerName]);
-            if (window.ShowDialog() == true)
-            {
-                //■ViewModelに反映
-                this.ViewModel.ColumnFilters[headerName] = window.GetResult();
-
-                //■ヘッダの出力調整
-                var header = column.Header.ToString();
-                if (header.EndsWith("*") && this.ViewModel.ColumnFilters[headerName] == null)
-                {
-                    column.Header = header.Substring(0, header.Length - 1);
-                }
-                else if (!header.EndsWith("*") && this.ViewModel.ColumnFilters[headerName] != null)
-                {
-                    column.Header = header + "*";
-                }
-
-
-                //■フィルタの適用
-               
-                viewSource.View.Refresh();
-            }
-        }
-
-        private void CheckAllButton_Click(object sender, RoutedEventArgs e)
-        {
-            var targets = this.dataGrid.Items.Cast<SkillValidity>().ToList();
-            foreach (var target in targets)
-            {
-                target.IsNecessary = true;
-            }
-        }
-
-        private void UnCheckAllButton_Click(object sender, RoutedEventArgs e)
-        {
-            var targets = this.dataGrid.Items.Cast<SkillValidity>().ToList();
-            foreach (var target in targets)
-            {
-                target.IsNecessary = false;
-            }
-        }
-
         private void Save()
         {
-            var targets = this.ViewModel.Data;
-
             //■SkillValidityテーブルを全件削除
             using (var command = App.CurrentApp.Connection.CreateCommand())
             {
-                command.CommandText = "delete from [SkillValidity];";
+                command.CommandText = "delete from [NecessarySkill];";
                 command.ExecuteNonQuery();
             }
 
             //■必要なスキルだけinsert(少ないと予想しているので
             using (var command = App.CurrentApp.Connection.CreateCommand())
             {
-                command.CommandText = "insert into  [SkillValidity]( [SkillName] , [IsNecessary]) values (@SkillName, 1);";
+                command.CommandText = "insert into  [NecessarySkill]([SkillName]) values (@SkillName);";
                 command.Parameters.Add(new SqliteParameter("@SkillName", SqliteType.Text));
-                foreach (var item in targets.Where(x => x.IsNecessary).ToList())
+                foreach (var skillName in this.ViewModel.SkillNames)
                 {
-                    command.Parameters["@SkillName"].Value = item.SkillName;
+                    command.Parameters["@SkillName"].Value = skillName;
                     command.ExecuteNonQuery();
                 }
             }
+        }
 
 
-            //■不要なスキルを登録
-            using (var command = App.CurrentApp.Connection.CreateCommand())
+        public class MyViewModel : ObservableObject
+        {
+            private string text = "";
+
+
+
+            public string Text
             {
-                command.CommandText = """
-                    insert into [SkillValidity]( [SkillName] , [IsNecessary]) 
-                    select 
-                        distinct
-                        [Skill].[SkillName]
-                        , 0 as [IsNecessary]
-                    from [Skill]
-                    where 
-                        not exists (select 1 from [SkillValidity] where [SkillName] = [Skill].[SkillName]);
-                """;
-                command.ExecuteNonQuery();
+                get => this.text;
+                set
+                {
+                    this.SetProperty(ref this.text, value);
+                    this.OnPropertyChanged(nameof(SkillNames));
+                }
             }
-
+            public List<string> SkillNames
+            {
+                get => this.Text
+                        .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                        .Where(x => x.Length > 1)
+                        .OrderBy(x => x)
+                        .ToList();
+                set
+                {
+                    var newText = string.Join(
+                                            Environment.NewLine,
+                                            value
+                                                .Where(x => x.Length > 1)
+                                                .OrderBy(x => x)
+                                                .ToList()
+                                         );
+                    this.Text = newText;
+                }
+            }
         }
+
+
     }
 
-    public class MyViewModel : ObservableObject
-    {
-        private IList<SkillValidity> data;
-        private ColumnFilters columnFilters = new ColumnFilters();
-
-        public MyViewModel()
-        {
-            this.data = new List<SkillValidity>();
-        }
-
-        public IList<SkillValidity> Data
-        {
-            get => data;
-            set => SetProperty(ref data, value);
-        }
-
-        public ColumnFilters ColumnFilters
-        {
-            get => this.columnFilters;
-            set => this.SetProperty(ref this.columnFilters, value);
-        }
-    }
-    public class SkillValidity : ObservableObject
-    {
-        private string skillName;
-        private bool isNecessary;
-
-        public SkillValidity(string skillName, bool isNecessary)
-        {
-            this.skillName = skillName;
-            this.isNecessary = isNecessary;
-        }
-
-        public string SkillName
-        {
-            get => skillName;
-            set => SetProperty(ref skillName, value);
-        }
-
-        public bool IsNecessary
-        {
-            get => isNecessary;
-            set => SetProperty(ref isNecessary, value);
-        }
-
-    }
 }

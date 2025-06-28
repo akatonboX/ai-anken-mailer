@@ -86,8 +86,7 @@ CREATE TABLE [LlmUsage] (
     , [OutputTokenCount] INTEGER NOT NULL
 );
 
-DROP TABLE IF EXISTS [SkillValidity];
-CREATE TABLE [SkillValidity] (
+DROP TABLE IF EXISTS [NecessarySkill];
+CREATE TABLE [NecessarySkill] (
     [SkillName] TEXT PRIMARY KEY
-    , [IsNecessary]  BOOLEAN NOT NULL DEFAULT 1
 );
