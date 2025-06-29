@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AnkenMailer"
         mc:Ignorable="d"
-        Title="集計結果" Height="450" Width="800">
+        Title="集計結果" Height="450" Width="800" WindowStartupLocation="CenterOwner">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Button Margin="5" Width="100" Click="CopyButton_Click">コピー</Button>

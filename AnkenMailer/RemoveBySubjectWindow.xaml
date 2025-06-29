@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AnkenMailer"
         mc:Ignorable="d"
-        Title="案件に必要なスキルの設定" Height="450" Width="800">
+        Title="案件に必要なスキルの設定" Height="450" Width="800" WindowStartupLocation="CenterOwner">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Button Width="200" Margin="5" Click="ImportButton_Click">AIの解析結果からインポート</Button>

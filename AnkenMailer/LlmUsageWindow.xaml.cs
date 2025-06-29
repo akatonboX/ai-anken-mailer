@@ -63,8 +63,32 @@ namespace AnkenMailer
         {
             //■価格単価
             //※ https://azure.microsoft.com/ja-jp/pricing/details/cognitive-services/openai-service/ の「gpt 4o 1120 Inp Data Zone」と「gpt 4o 1120 Outp Data Zone」
-            decimal pricePerOutputToken = 0.011m;
-            decimal pricePerInputToken = 0.00275m;
+            private decimal? PricePerOutputToken
+            {
+                get
+                {
+                    switch (Properties.Settings.Default.DeploymentName)
+                    {
+                        case "gpt-4o": return 0.011m;
+                        case "gpt-4.1": return 0.008m;
+                        case "gpt-4.1-mini": return 0.0016m;
+                        default: return null;
+                    }
+                }
+            }
+            private decimal? PricePerInputToken
+            {
+                get
+                {
+                    switch (Properties.Settings.Default.DeploymentName)
+                    {
+                        case "gpt-4o": return 0.00275m;
+                        case "gpt-4.1": return 0.002m;
+                        case "gpt-4.1-mini": return 0.0004m;
+                        default: return null;
+                    }
+                }
+            }
 
             private IList<string> yearMonths = new List<string>();
             private string? selectedYearMonth = null;
@@ -116,7 +140,7 @@ namespace AnkenMailer
             }
             public decimal? TotalInputTokencCost
             {
-                get => this.TotalInputTokenCount == null ? null : (new Decimal((long)this.TotalInputTokenCount) / 1000m) * this.pricePerInputToken;
+                get => this.TotalInputTokenCount == null ? null : (new Decimal((long)this.TotalInputTokenCount) / 1000m) * (this.PricePerInputToken ?? 0m);
             }
             public long? TotalOutputTokenCount
             {
@@ -124,7 +148,7 @@ namespace AnkenMailer
             }
             public decimal? TotalOutputTokenCost
             {
-                get => this.TotalOutputTokenCount == null ? null : (new Decimal((long)this.TotalOutputTokenCount) / 1000m) * this.pricePerOutputToken;
+                get => this.TotalOutputTokenCount == null ? null : (new Decimal((long)this.TotalOutputTokenCount) / 1000m) * (this.PricePerOutputToken ?? 0m);
             }
             public decimal? TotaTokenCost
             {

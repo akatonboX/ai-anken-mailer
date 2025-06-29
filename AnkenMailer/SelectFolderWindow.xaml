@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AnkenMailer"
         mc:Ignorable="d"
-        Title="フォルダの選択" Height="450" Width="800">
+        Title="フォルダの選択" Height="450" Width="800" WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <ResourceDictionary>
             <local:NullToBooleanConverter x:Key="nullToBooleanConverter"/>

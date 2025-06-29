@@ -357,6 +357,13 @@ namespace AnkenMailer
             });
         }
 
+        private void copyMailBocyButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = (Button)sender;
+            var mailItem = (MailItem)button.DataContext;
+            if (mailItem.Message != null && mailItem.Message.Body != null)
+                Clipboard.SetText(mailItem.Message.Body);
+        }
         private void DeleteMailButton_Click(object sender, RoutedEventArgs e)
         {
             var button = (Button)sender;
@@ -724,7 +731,7 @@ namespace AnkenMailer
                 this.ViewModel.Json = JsonSerializer.Serialize(anken, new JsonSerializerOptions
                 {
                     WriteIndented = true, // 整形出力
-                    Encoder = JavaScriptEncoder.Create(UnicodeRanges.All) // Unicodeエンコードを防止（日本語などをそのまま出力）
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping// Unicodeエンコードを防止（日本語などをそのまま出力）
                 });
             }
         }
@@ -920,6 +927,7 @@ namespace AnkenMailer
                 """, "アプリケーションの情報", MessageBoxButton.OK);
             
         }
+
     }
 
     public class MainWindowViewModel : ObservableObject

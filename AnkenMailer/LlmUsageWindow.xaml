@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AnkenMailer"
         mc:Ignorable="d"
-        Title="lmUsageWindow" Height="450" Width="800">
+        Title="lmUsageWindow" Height="450" Width="800" WindowStartupLocation="CenterOwner">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
             <ComboBox Margin="5" Width="100" ItemsSource="{Binding YearMonths}" SelectedValue="{Binding SelectedYearMonth}"/>
