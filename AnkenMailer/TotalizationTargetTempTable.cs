@@ -75,7 +75,7 @@ namespace AnkenMailer
                         var mailItems = (from summary in folder.Fetch(0, -1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId) select new MailItem(folder.FullName, summary.UniqueId, summary.Envelope)).ToList();
                         foreach (var mailItem in mailItems)
                         {
-                            command.Parameters["@MessageId"].Value = mailItem.Envelope.MessageId;
+                            command.Parameters["@MessageId"].Value = mailItem.MessageId;
                             command.Parameters["@From"].Value = mailItem.Envelope.From.ToString();
                             command.Parameters["@Folder"].Value = mailItem.FolderPath;
                             command.ExecuteNonQuery();

@@ -15,6 +15,7 @@ using System.Windows.Controls;
 using static AnkenMailer.ColumnFilterWindow;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Security.Cryptography;
 
 namespace AnkenMailer.Model
 {
@@ -23,12 +24,12 @@ namespace AnkenMailer.Model
         private long id;
         private string folderPath;
         private UniqueId uid;
-        
+
         private Envelope envelope;
         private MailMessage? message = null;
         private AnkenHeader? ankenHeader = null;
         private IList<Anken>? ankens = null;
-        private bool hasCreateError = false; 
+        private bool hasCreateError = false;
 
 
         public MailItem(string folderPath, UniqueId uid, Envelope envelope)
@@ -45,7 +46,7 @@ namespace AnkenMailer.Model
                 {
                     using var command = App.CurrentApp.Connection.CreateCommand();
                     command.CommandText = "select [EnvelopeId] from [Envelope] where [MessageId]=@messageId and [From] = @from;";
-                    command.Parameters.AddWithValue("@messageId", this.Envelope.MessageId);
+                    command.Parameters.AddWithValue("@messageId", this.MessageId);
                     command.Parameters.AddWithValue("@from", this.Envelope.From.ToString());
                     return command.ExecuteScalar() as long?;
                 })();
@@ -79,7 +80,7 @@ namespace AnkenMailer.Model
                                 )
                                 RETURNING EnvelopeId;
                                 """;
-                    command.Parameters.AddWithValue("@messageId", this.Envelope.MessageId);
+                    command.Parameters.AddWithValue("@messageId", this.MessageId);
                     command.Parameters.AddWithValue("@date", this.Envelope.Date == null ? DBNull.Value : this.Envelope.Date?.ToString("o"));
                     command.Parameters.AddWithValue("@from", this.Envelope.From.Count == 0 ? DBNull.Value : this.Envelope.From.ToString());
                     command.Parameters.AddWithValue("@bcc", this.Envelope.Bcc.Count == 0 ? DBNull.Value : this.Envelope.Bcc.ToString());
@@ -142,7 +143,7 @@ namespace AnkenMailer.Model
         public Envelope Envelope
         {
             get => envelope;
-            set{
+            set {
                 SetProperty(ref envelope, value);
                 OnPropertyChanged(nameof(Subject));
                 OnPropertyChanged(nameof(Sender));
@@ -174,7 +175,13 @@ namespace AnkenMailer.Model
             }
         }
 
-       
+        public string MessageId
+        {
+            get
+            {
+                return this.envelope.MessageId ?? ComputeSHA256Hash($"{this.envelope.Subject}-{this.envelope.From}-{this.envelope.Date?.ToString("yyyy/MM/dd HH:mm:ss")}");
+            }
+        }
 
         //ここからViewプロパティ。DataGridのため
         private Anken? TopAnken
@@ -229,8 +236,25 @@ namespace AnkenMailer.Model
             OnPropertyChanged(nameof(HasError));
 
         }
+
+        static string ComputeSHA256Hash(string rawData)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(rawData);
+                byte[] hashBytes = sha256.ComputeHash(bytes);
+
+                // バイト配列を16進文字列に変換
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hashBytes)
+                {
+                    sb.Append(b.ToString("x2")); // 小文字の16進数
+                }
+                return sb.ToString();
+            }
+
+
+        }
     }
-
-
-    
 }
+

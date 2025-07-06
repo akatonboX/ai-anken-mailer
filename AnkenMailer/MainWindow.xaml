@@ -113,8 +113,8 @@
 
                         </DataGrid.Resources>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="取り込みエラー" Binding="{Binding HasCreateError}" IsReadOnly="True" Width="60" />
-                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="60" />
+                            <DataGridTextColumn Header="取り込みエラー" Binding="{Binding HasCreateError}" IsReadOnly="True" Width="60"  SortMemberPath="HasCreateError"  />
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="60" SortMemberPath="Id" />
                             <DataGridTextColumn Header="件名" Binding="{Binding Subject}"  IsReadOnly="True" Width="300" SortMemberPath="Subject" />
                             <DataGridTextColumn Header="送信元" Binding="{Binding Sender}"  IsReadOnly="True" Width="100" SortMemberPath="Sender" />
                             <DataGridTextColumn Header="送信日時" Binding="{Binding Date}" IsReadOnly="True" SortMemberPath="Date"  />
@@ -134,7 +134,7 @@
                             <DataGridTextColumn Header="尚可スキル" Binding="{Binding DesirableSkills}"  IsReadOnly="True" Width="300" SortMemberPath="DesirableSkills" />
                             <DataGridTextColumn Header="開始" Binding="{Binding Start}" IsReadOnly="True" SortMemberPath="Start"  />
                             <DataGridTextColumn Header="終了" Binding="{Binding End}" IsReadOnly="True" SortMemberPath="End"  />
-
+                            <DataGridTextColumn Header="MessageId" Binding="{Binding MessageId}" IsReadOnly="True" SortMemberPath="MessageId"  />
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
