@@ -28,6 +28,7 @@ namespace AnkenMailer.Model
         private MailMessage? message = null;
         private AnkenHeader? ankenHeader = null;
         private IList<Anken>? ankens = null;
+        private bool hasCreateError = false; 
 
 
         public MailItem(string folderPath, UniqueId uid, Envelope envelope)
@@ -37,6 +38,7 @@ namespace AnkenMailer.Model
             this.envelope = envelope;
 
             //■Envelopeの保存
+            try
             {
                 //■存在確認とIdの取得
                 var id = new Func<long?>(() =>
@@ -46,7 +48,6 @@ namespace AnkenMailer.Model
                     command.Parameters.AddWithValue("@messageId", this.Envelope.MessageId);
                     command.Parameters.AddWithValue("@from", this.Envelope.From.ToString());
                     return command.ExecuteScalar() as long?;
-
                 })();
                 if (id == null) //■DB無ければインサート
                 {
@@ -99,9 +100,9 @@ namespace AnkenMailer.Model
                     this.id = (long)id;
                     this.message = MailMessage.Load(this.Id);
                     if (this.message != null)
-                    { 
+                    {
                         this.ankenHeader = AnkenHeader.Load(this.Id);
-                        
+
                         if (ankenHeader != null && !this.ankenHeader.HasError)
                         {
                             this.ankens = Anken.Load(this.Id);
@@ -109,9 +110,16 @@ namespace AnkenMailer.Model
                     }
                 }
             }
+            catch (Exception e)
+            {
+                this.hasCreateError = true;
+            }
         }
 
-
+        public bool HasCreateError
+        {
+            get => this.hasCreateError;
+        }
 
         public long Id
         {

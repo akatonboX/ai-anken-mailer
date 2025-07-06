@@ -104,7 +104,8 @@ namespace AnkenMailer
                     })();
 
                     var index = 0;
-                    foreach (var mailItem in mailItems)//■パラレル実行しても、imapサーバやAzure OpenAIがエラーを起こすのでシングル実行
+                    var targetMailItems = mailItems.Where(x => !x.HasCreateError).ToList();//取り込みエラーがあるメールは除外
+                    foreach (var mailItem in targetMailItems)//■パラレル実行しても、imapサーバやAzure OpenAIがエラーを起こすのでシングル実行
                     {
                         cancelToken.ThrowIfCancellationRequested();
 

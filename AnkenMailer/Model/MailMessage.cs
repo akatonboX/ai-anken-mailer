@@ -82,18 +82,20 @@ namespace AnkenMailer.Model
                     }
                     return new MailMessage(null);
                 })();
-
-                using var command = App.CurrentApp.Connection.CreateCommand();
-                command.CommandText = """
+                if (!mailItem.HasCreateError)//作成エラーでなければDBに登録
+                {
+                    using var command = App.CurrentApp.Connection.CreateCommand();
+                    command.CommandText = """
                                     INSERT INTO [Message] ("EnvelopeId", "Body")
                                     VALUES ( 
                                         @envelopeId
                                         , @body
                                     )
                                     """;
-                command.Parameters.AddWithValue("@envelopeId", mailItem.Id);
-                command.Parameters.AddWithValue("@body", mailMessage.Body);
-                command.ExecuteNonQuery();
+                    command.Parameters.AddWithValue("@envelopeId", mailItem.Id);
+                    command.Parameters.AddWithValue("@body", mailMessage.Body);
+                    command.ExecuteNonQuery();
+                }
 
                 return mailMessage;
             }

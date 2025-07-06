@@ -19,8 +19,7 @@ namespace AnkenMailer
             client.Authenticate(Properties.Settings.Default.ImapUser, Properties.Settings.Default.ImapPassword);
             return client;
         }
-
-        public static IMailFolder GetTrash(IMailFolder parentFolder)
+        public static IMailFolder GetChildFolder(IMailFolder parentFolder, string folderName)
         {
             if (!parentFolder.IsOpen)
                 parentFolder.Open(FolderAccess.ReadWrite);
@@ -32,16 +31,23 @@ namespace AnkenMailer
             // 名前一致するサブフォルダを探す
             foreach (var folder in subfolders)
             {
-                if (folder.Name.Equals("removed", StringComparison.OrdinalIgnoreCase))
+                if (folder.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase))
                 {
                     return folder; // 既に存在
                 }
             }
 
             // 存在しないので作成
-            var newFolder = parentFolder.Create("removed", true);
+            var newFolder = parentFolder.Create(folderName, true);
             return newFolder;
         }
-
+        public static IMailFolder GetTrash(IMailFolder parentFolder)
+        {
+            return GetChildFolder(parentFolder, "removed");
+        }
+        public static IMailFolder GetErrorFolder(IMailFolder parentFolder)
+        {
+            return GetChildFolder(parentFolder, "取り込みエラー");
+        }
     }
 }
