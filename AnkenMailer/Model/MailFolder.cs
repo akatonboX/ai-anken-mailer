@@ -19,7 +19,7 @@ namespace AnkenMailer.Model
         {
             fullName = folder.FullName;
             name = folder.Name;
-            Children = new ObservableCollection<MailFolder>(from item in folder.GetSubfolders(false) select new MailFolder(item));
+            Children = new ObservableCollection<MailFolder>(from item in folder.GetSubfolders(false) orderby item.Name select new MailFolder(item));
         }
 
         public string FullName
