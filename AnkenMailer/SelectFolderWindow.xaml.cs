@@ -34,7 +34,7 @@ namespace AnkenMailer
             {
                 Folder = folder;
                 Name = folder.Name;
-                Children = new ObservableCollection<FolderViewModel>(from item in folder.GetSubfolders(false) select new FolderViewModel(item));
+                Children = new ObservableCollection<FolderViewModel>(from item in folder.GetSubfolders(false) orderby item.Name select new FolderViewModel(item));
             }
 
             public IMailFolder Folder { get; }

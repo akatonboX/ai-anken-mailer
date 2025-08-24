@@ -428,33 +428,51 @@ namespace AnkenMailer
 
             if (MessageBox.Show("表示されているメールのうち、重複した件名を持つメールを削除しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                using (var client = IMap.Open())
+                var totalCount = 0;
+                var executedCount = 0;
+                try
                 {
-                    //■IMAPの準備
-                   
-                    var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
-                    srcFolder.Open(FolderAccess.ReadWrite);
-                    var destFolder = IMap.GetTrash(srcFolder);
-                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
-
-                    var duplicatedMailItems = targets
-                        .GroupBy(item => item.Subject)
-                        .Where(g => g.Count() > 1)        // subject が重複しているグループだけ
-                        .SelectMany(g => // SelectMany(flatten)で、残すメールは除外する。
-                        {
-                            var maxDate = g.Max(item => item.Date);
-                            var leave = g.First(item => item.Date.Equals(maxDate));
-                            return g.Where(x => x != leave);
-                        })               
-                        .ToList();
-
-                    foreach (var target in duplicatedMailItems)
+                    using (var client = IMap.Open())
                     {
-                        srcFolder.MoveTo(target.UId, destFolder);
-                        this.ViewModel.MailItems.Remove(target);
+                        //■IMAPの準備
+
+                        var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
+                        srcFolder.Open(FolderAccess.ReadWrite);
+                        var destFolder = IMap.GetTrash(srcFolder);
+                        this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
+
+                        var duplicatedMailItems = targets
+                            .GroupBy(item => item.Subject)
+                            .Where(g => g.Count() > 1)        // subject が重複しているグループだけ
+                            .SelectMany(g => // SelectMany(flatten)で、残すメールは除外する。
+                            {
+                                var maxDate = g.Max(item => item.Date);
+                                var leave = g.First(item => item.Date.Equals(maxDate));
+                                return g.Where(x => x != leave);
+                            })
+                            .ToList();
+                        totalCount = duplicatedMailItems.Count;
+                        foreach (var target in duplicatedMailItems)
+                        {
+                            srcFolder.MoveTo(target.UId, destFolder);
+                            this.ViewModel.MailItems.Remove(target);
+                            executedCount++;
+                        }
+
+
                     }
+                    MessageBox.Show($"${executedCount}件を整理しました。");
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show($@"
+エラーが発生したので、${totalCount}中、{executedCount}件を実行して、中断しました。
+-----------------------------------------------------------
+class: {exception.GetType().FullName}
+message; {exception.Message}
 
-
+                    ");
+                    return;
                 }
             }
         }
@@ -470,22 +488,25 @@ namespace AnkenMailer
 
             var window = new RemoveBySubjectWindow();
             window.Owner = this;
-            if(window.ShowDialog() == true)
+            if (window.ShowDialog() == true)
             {
-                using (var client = IMap.Open())
+                var executedCount = 0;
+                try
                 {
-                    var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
-                    srcFolder.Open(FolderAccess.ReadWrite);
-                    var destFolder = IMap.GetTrash(srcFolder);
-                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
-
-                    var necessaries = window.ViewModel.SkillNames;
-                    var unNecessaries = new Func<List<string>>(() =>
+                    using (var client = IMap.Open())
                     {
-                        var result = new List<string>();
-                        using (var command = App.CurrentApp.Connection.CreateCommand())
+                        var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
+                        srcFolder.Open(FolderAccess.ReadWrite);
+                        var destFolder = IMap.GetTrash(srcFolder);
+                        this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
+
+                        var necessaries = window.ViewModel.SkillNames;
+                        var unNecessaries = new Func<List<string>>(() =>
                         {
-                            command.CommandText = """
+                            var result = new List<string>();
+                            using (var command = App.CurrentApp.Connection.CreateCommand())
+                            {
+                                command.CommandText = """
                                 select 
                                     distinct [SkillName] 
                                 from [Skill] 
@@ -493,34 +514,45 @@ namespace AnkenMailer
                                     length([SkillName]) > 1
                                 order by [SkillName];
                             """;
-                            using (var reader = command.ExecuteReader())
-                            {
-                                while (reader.Read())
+                                using (var reader = command.ExecuteReader())
                                 {
-                                    var skillName = reader.GetString(0);
-                                    if (!necessaries.Contains(skillName, StringComparer.OrdinalIgnoreCase))
+                                    while (reader.Read())
                                     {
-                                        result.Add(skillName);
-                                    }
+                                        var skillName = reader.GetString(0);
+                                        if (!necessaries.Contains(skillName, StringComparer.OrdinalIgnoreCase))
+                                        {
+                                            result.Add(skillName);
+                                        }
 
+                                    }
                                 }
                             }
-                        }
-                        return result;
-                    })();
-                    foreach (var target in targets)
-                    {
-                        var subject = target.Subject;
-                        var a = unNecessaries.FindAll(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0);
-                        var b = necessaries.FindAll(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0);
-                        if (subject != null && unNecessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0) && !necessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0))
+                            return result;
+                        })();
+                        foreach (var target in targets)
                         {
-                            srcFolder.MoveTo(target.UId, destFolder);
-                            this.ViewModel.MailItems.Remove(target);
+                            var subject = target.Subject;
+                            var a = unNecessaries.FindAll(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0);
+                            var b = necessaries.FindAll(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0);
+                            if (subject != null && unNecessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0) && !necessaries.Any(x => subject.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0))
+                            {
+                                srcFolder.MoveTo(target.UId, destFolder);
+                                this.ViewModel.MailItems.Remove(target);
+                                executedCount++;
+                            }
                         }
                     }
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show($@"
+エラーが発生したので、{executedCount}件を実行して、中断しました。
+-----------------------------------------------------------
+class: {exception.GetType().FullName}
+message; {exception.Message}
 
-
+                    ");
+                    return;
                 }
             }
         }
@@ -535,20 +567,39 @@ namespace AnkenMailer
 
             if (MessageBox.Show("表示されているメールをすべて削除しますか？", "質問", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                using (var client = IMap.Open())
+                var totalCount = 0;
+                var executedCount = 0;
+                try
                 {
-                    var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
-                    srcFolder.Open(FolderAccess.ReadWrite);
-                    var destFolder = IMap.GetTrash(srcFolder);
-                    this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
-                    foreach (var target in targets)
+                    using (var client = IMap.Open())
                     {
-                        srcFolder.MoveTo(target.UId, destFolder);
-                        this.ViewModel.MailItems.Remove(target);
+                        var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
+                        srcFolder.Open(FolderAccess.ReadWrite);
+                        var destFolder = IMap.GetTrash(srcFolder);
+                        this.ViewModel.SelectedMailFolder.Refresh(srcFolder);
+                        totalCount = targets.Count;
+                        foreach (var target in targets)
+                        {
+                            srcFolder.MoveTo(target.UId, destFolder);
+                            this.ViewModel.MailItems.Remove(target);
+                            executedCount++;
+                        }
+
+
                     }
-
-
                 }
+                catch (Exception exception)
+                {
+                    MessageBox.Show($@"
+エラーが発生したので、{executedCount}件を実行して、中断しました。
+-----------------------------------------------------------
+class: {exception.GetType().FullName}
+message; {exception.Message}
+
+                    ");
+                    return;
+                }
+
             }
           
         }
@@ -577,15 +628,29 @@ namespace AnkenMailer
                         MessageBox.Show("同じフォルダです。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
-                    var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
-                    srcFolder.Open(FolderAccess.ReadWrite);
-                    foreach (var target in targets)
+                    var totalCount = targets.Count;
+                    var executedCount = 0;
+                    try
                     {
-                        srcFolder.MoveTo(target.UId, window.Folder);
-                        this.ViewModel.MailItems.Remove(target);
+                        var srcFolder = client.GetFolder(this.ViewModel.SelectedMailFolder.FullName);
+                        srcFolder.Open(FolderAccess.ReadWrite);
+                        foreach (var target in targets)
+                        {
+                            srcFolder.MoveTo(target.UId, window.Folder);
+                            this.ViewModel.MailItems.Remove(target);
+                            executedCount++;
+                        }
                     }
-                    
-                    
+                    catch (Exception exception)
+                    {
+                        MessageBox.Show($@"
+エラーが発生したので、${totalCount}中、{executedCount}件を実行して、中断しました。
+-----------------------------------------------------------
+class: {exception.GetType().FullName}
+message; {exception.Message}
+
+                    ");
+                    }
                 }
             }
         }
