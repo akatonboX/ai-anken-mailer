@@ -993,6 +993,27 @@ message; {exception.Message}
             
         }
 
+        private void mailItemList_Deleted(object sender, ExecutedRoutedEventArgs e)
+        {
+            var deletedItems = this.mailItemList.SelectedItems
+                            .Cast<MailItem>()
+                            .ToList();
+            using (var client = IMap.Open())
+            {
+                if (deletedItems.Count > 0)
+                {
+                    var srcFolder = client.GetFolder(deletedItems[0].FolderPath);//削除対象は同じフォルダとみなす。
+                    srcFolder.Open(FolderAccess.ReadWrite);
+                    var destFolder = IMap.GetTrash(srcFolder);
+
+                    foreach (var mailItem in deletedItems)
+                    {
+                        srcFolder.MoveTo(mailItem.UId, destFolder);
+                        this.ViewModel.MailItems.Remove(mailItem);
+                    }
+                }
+            }
+        }
     }
 
     public class MainWindowViewModel : ObservableObject

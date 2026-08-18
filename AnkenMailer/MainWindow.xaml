@@ -105,7 +105,12 @@
                         AutoGenerateColumns="False" 
                         ClipboardCopyMode="IncludeHeader"
                         Sorting="mailItemList_Sorting"
-                        SelectionChanged="mailItemList_SelectionChanged">
+                        SelectionChanged="mailItemList_SelectionChanged"
+
+                        >
+                        <DataGrid.CommandBindings>
+                            <CommandBinding Command="Delete" Executed="mailItemList_Deleted"/>
+                        </DataGrid.CommandBindings>
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader">
                                 <EventSetter Event="MouseRightButtonDown" Handler="ColumnHeader_RightClick"/>
